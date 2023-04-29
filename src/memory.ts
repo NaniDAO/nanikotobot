@@ -151,6 +151,8 @@ type ChatCompletionRequestMessageWithTimestamp = ChatCompletionRequestMessage & 
   timestamp: number;
 };
 
+const MAX_ITERATIONS = 5;
+
 export const getRelevantTelegramHistory = async ({
   query,
   secondsAgo,
@@ -160,6 +162,8 @@ export const getRelevantTelegramHistory = async ({
   secondsAgo: number,
   iteration?: number,
 }) => {
+  console.log('getRelevantTelegramHistory called with:', { query, secondsAgo, iteration });
+
   try {
     const matches = (await searchEmbeddings({
       query,
@@ -173,27 +177,30 @@ export const getRelevantTelegramHistory = async ({
       },
     })).matches
 
+    console.log('matches:', matches);
+
     if (!matches) return []
 
-    let relevantHistory: ChatCompletionRequestMessageWithTimestamp[] = []
-    for (let i = 0; i < matches.length; i++) {
-      if (matches[i].score === undefined) return
-      if (parseFloat(`${matches[i].score}`) > 0.95) {
-        relevantHistory.push({
-          role: "user",
-          content: matches[i]?.metadata?.content as string,
-          name: matches[i]?.metadata?.username as string,
-          timestamp: matches[i]?.metadata?.timestamp as number,
-        })
-      }
-    }
-    if (relevantHistory.length < 10) {
+    const relevantHistory = matches
+      .filter((match) => match.score !== undefined && parseFloat(`${match.score}`) > 0.95)
+      .map((match) => ({
+        role: "user",
+        content: match.metadata?.content as string,
+        name: match.metadata?.username as string,
+        timestamp: match.metadata?.timestamp as number,
+      }));
+
+    console.log('relevantHistory:', relevantHistory);
+
+    if (relevantHistory.length < 10 && iteration < MAX_ITERATIONS) {
       const nextSecondsAgo = [60, 600, 3600, 86400][iteration] || 86400;
+      console.log('Fetching additional history with nextSecondsAgo:', nextSecondsAgo);
       const additionalHistory = await getRelevantTelegramHistory({
         query,
         secondsAgo: secondsAgo + nextSecondsAgo,
         iteration: iteration + 1,
       });
+      console.log('additionalHistory:', additionalHistory);
       if (additionalHistory) {
         relevantHistory = relevantHistory.concat(additionalHistory.slice(0, 10 - relevantHistory.length));
       }
@@ -201,8 +208,10 @@ export const getRelevantTelegramHistory = async ({
 
     relevantHistory.sort((a, b) => a.timestamp - b.timestamp);
 
+    console.log('Final relevantHistory:', relevantHistory);
     return relevantHistory;
   } catch (e) {
-    throw e
+    console.error('Error in getRelevantTelegramHistory:', e);
+    throw e;
   }
 }
