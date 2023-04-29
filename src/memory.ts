@@ -10,6 +10,12 @@ import { openai } from "./openai";
 import { getTimestampAt } from "./utils";
 import { ChatCompletionRequestMessage } from 'openai'
 
+export type ChatCompletionRequestMessageWithTimestamp = ChatCompletionRequestMessage & {
+  timestamp: number;
+};
+
+const MAX_ITERATIONS = 5;
+
 const pinecone = new PineconeClient()
 
 await pinecone.init({
@@ -147,12 +153,6 @@ export const searchEmbeddings = async ({
   }
 }
 
-type ChatCompletionRequestMessageWithTimestamp = ChatCompletionRequestMessage & {
-  timestamp: number;
-};
-
-const MAX_ITERATIONS = 5;
-
 export const getRelevantTelegramHistory = async ({
   query,
   secondsAgo,
@@ -161,7 +161,7 @@ export const getRelevantTelegramHistory = async ({
   query: string,
   secondsAgo: number,
   iteration?: number,
-}) => {
+}): Promise<ChatCompletionRequestMessageWithTimestamp[]> => {
   console.log('getRelevantTelegramHistory called with:', { query, secondsAgo, iteration });
 
   try {

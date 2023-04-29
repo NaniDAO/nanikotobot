@@ -10,3 +10,11 @@ export const getTimestampAt = (seconds: number) => {
   const timestampSecondsAgo = currentTimestamp - seconds;
   return timestampSecondsAgo;
 }
+
+export const unixTimestampToISO = (timestamp: number) => {
+  if (!timestamp) {
+    return ''
+  }
+
+  return new Date(timestamp * 1000).toISOString()
+}

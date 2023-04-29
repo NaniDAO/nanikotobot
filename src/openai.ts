@@ -38,10 +38,12 @@ const processLines = (
 
 export const getChatCompletion = async ({
   messages,
-  system_prompt
+  system_prompt,
+  model = 'gpt-4',
 }: {
   messages: ChatCompletionRequestMessage[],
-  system_prompt: string
+  system_prompt: string,
+  model?: string,
 }): Promise<string> => {
   try {
     let reply = ''
@@ -53,7 +55,7 @@ export const getChatCompletion = async ({
 
     const response = await openai.createChatCompletion(
       {
-        model: "gpt-4",
+        model: model,
         messages: [
           {
             role: 'system',

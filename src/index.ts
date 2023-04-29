@@ -1,9 +1,10 @@
 import { Bot } from "grammy";
 import { config } from "dotenv";
 import { getChatCompletion } from "./openai";
-import { getRelevantTelegramHistory, searchEmbeddings, storeEmbeddingsWithMetadata } from "./memory";
+import { ChatCompletionRequestMessageWithTimestamp, getRelevantTelegramHistory, storeEmbeddingsWithMetadata } from "./memory";
 import { getSystemPrompt } from "./system_prompt";
 import { ChatCompletionRequestMessage } from 'openai'
+import { summarizeHistoricalContext } from "./summarize";
 
 config()
 
@@ -36,12 +37,11 @@ bot.on("message", async (ctx) => {
     console.log('Stored ->', message)
 
     if (message.toLowerCase().includes("nani")) { // to make it more conversational
-      let history: ChatCompletionRequestMessage[] | undefined = await getRelevantTelegramHistory({
+      const historicalContext: ChatCompletionRequestMessageWithTimestamp[] = await getRelevantTelegramHistory({
         query: message,
         secondsAgo: 60,
-      }).then((history) => {
-        return history?.map(({ role, content, name }) => ({ role, content, name }));
       })
+
 
       console.log('Generated History ->', history)
 
@@ -60,12 +60,16 @@ bot.on("message", async (ctx) => {
         name: author.user.username,
       })
 
+      const relevantHistoricalContext = historicalContext && historicalContext.length > 0 ? await summarizeHistoricalContext({
+        historicalContext,
+        query: message,
+      }) : ''
+
       const response = await getChatCompletion({
         messages: [
-          ...history ?? [],
           ...messageChain,
         ],
-        system_prompt: getSystemPrompt()
+        system_prompt: getSystemPrompt(relevantHistoricalContext)
       })
 
       const reply = await ctx.reply(response, {
@@ -89,7 +93,7 @@ bot.on("message", async (ctx) => {
     }
   } catch (e) {
     console.error(e)
-    bot.api.sendMessage(ctx.msg.chat.id, `Error @nerderlyne -> ${e.message}`)
+    bot.api.sendMessage(ctx.msg.chat.id, `Error @nerderlyne -> ${e instanceof Error ? e?.message : 'Unknown Error'}`)
   }
 });
 
