@@ -11,10 +11,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@pinecone-database/pinecone": "^0.0.14",
+    "@types/uuid": "^9.0.1",
     "axios": "0.26.1",
     "dotenv": "^16.0.3",
+    "gpt-3-encoder": "^1.1.4",
     "grammy": "^1.16.0",
-    "openai": "^3.2.1"
+    "openai": "^3.2.1",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@types/node": "^18.16.3",

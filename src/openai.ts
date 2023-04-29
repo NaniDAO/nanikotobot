@@ -8,11 +8,7 @@ const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-const MAX_RETRIES = 5
-const INITIAL_BACKOFF_MS = 500
-
-const delay = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms))
+export const openai = new OpenAIApi(configuration)
 
 const parseChunk = (chunk: Buffer): string[] =>
   chunk
@@ -41,13 +37,15 @@ const processLines = (
   return false
 }
 
+
 export const getChatCompletion = async ({
   message,
+  system_prompt
 }: {
-  message: ChatCompletionRequestMessage
+  message: ChatCompletionRequestMessage,
+  system_prompt: string
 }): Promise<string> => {
   try {
-    const openai = new OpenAIApi(configuration)
     let reply = ''
     const callback = (message: string) => {
       console.clear()
@@ -61,7 +59,7 @@ export const getChatCompletion = async ({
         messages: [
           {
             role: 'system',
-            content: SYSTEM_PROMPT,
+            content: system_prompt,
           },
           message
         ],
