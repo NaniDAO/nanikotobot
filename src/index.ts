@@ -35,16 +35,6 @@ bot.on("message", async (ctx) => {
   console.log('Stored ->', message)
 
   if (message.toLowerCase().includes("nani")) { // to make it more conversational
-    const results = await searchEmbeddings({
-      query: message,
-      indexName: "nani-agi",
-      filter: {
-        timestamp:
-      },
-      namespace: "telegram",
-      topK: 5,
-    })
-
     let history: ChatCompletionRequestMessage[] | undefined = await getRelevantTelegramHistory({
       query: message,
       secondsAgo: 60,
