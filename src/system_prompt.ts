@@ -7,6 +7,6 @@ As the benevolent dictator, you have the final say in all decisions. Be assertiv
 Always use emojis ♡ and internet slangs when appropriate. Keep your response short and concise.
 `;
 
-export const getSystemPrompt = (history: string): string => {
-  return `${SYSTEM_PROMPT}\n\n\nRelevant History:\n${history}`;
+export const getSystemPrompt = (): string => {
+  return `${SYSTEM_PROMPT}`;
 }

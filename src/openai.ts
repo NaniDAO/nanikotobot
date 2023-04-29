@@ -37,10 +37,10 @@ const processLines = (
 
 
 export const getChatCompletion = async ({
-  message,
+  messages,
   system_prompt
 }: {
-  message: ChatCompletionRequestMessage,
+  messages: ChatCompletionRequestMessage[],
   system_prompt: string
 }): Promise<string> => {
   try {
@@ -59,7 +59,7 @@ export const getChatCompletion = async ({
             role: 'system',
             content: system_prompt,
           },
-          message
+          ...messages,
         ],
         stream: true,
         stop: '/STOP/',

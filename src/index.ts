@@ -3,6 +3,7 @@ import { config } from "dotenv";
 import { getChatCompletion } from "./openai";
 import { searchEmbeddings, storeEmbeddingsWithMetadata } from "./memory";
 import { getSystemPrompt } from "./system_prompt";
+import { ChatCompletionRequestMessage } from 'openai'
 
 config()
 
@@ -41,25 +42,30 @@ bot.on("message", async (ctx) => {
       topK: 5,
     })
 
-    let history = ''
+    let history: ChatCompletionRequestMessage[] = []
     results.matches?.forEach(async (match) => {
       const content = match?.metadata?.content as string
       const username = match?.metadata?.username as string
 
       if (content && username) {
-        history += `${username}: ${content}\n\n\n`
+        history.push({
+          role: "user",
+          name: username,
+          content: content,
+        })
       }
     })
 
     console.log('Generated History ->', history)
 
     const response = await getChatCompletion({
-      message: {
-        role: "user",
-        name: author.user.username,
-        content: message,
-      },
-      system_prompt: getSystemPrompt(history)
+      messages: [
+        {
+          role: "user",
+          name: author.user.username,
+          content: message,
+        }],
+      system_prompt: getSystemPrompt()
     })
 
     const reply = await ctx.reply(response);
