@@ -7,6 +7,8 @@ import {
 import { encode, decode } from 'gpt-3-encoder'
 import { getVectorId } from "./utils";
 import { openai } from "./openai";
+import { getTimestampAt } from "./utils";
+import { ChatCompletionRequestMessage } from 'openai'
 
 const pinecone = new PineconeClient()
 
@@ -142,5 +144,65 @@ export const searchEmbeddings = async ({
   } catch (error) {
     console.error('Error querying embeddings:', error)
     throw error
+  }
+}
+
+type ChatCompletionRequestMessageWithTimestamp = ChatCompletionRequestMessage & {
+  timestamp: number;
+};
+
+export const getRelevantTelegramHistory = async ({
+  query,
+  secondsAgo,
+  iteration = 0,
+}: {
+  query: string,
+  secondsAgo: number,
+  iteration?: number,
+}) => {
+  try {
+    const matches = (await searchEmbeddings({
+      query,
+      indexName: "nani-agi",
+      topK: 10,
+      namespace: "telegram",
+      filter: {
+        timestamp: {
+          $gte: getTimestampAt(secondsAgo),
+        },
+      },
+    })).matches
+
+    if (!matches) return []
+
+    let relevantHistory: ChatCompletionRequestMessageWithTimestamp[] = []
+    for (let i = 0; i < matches.length; i++) {
+      if (matches[i].score === undefined) return
+      if (parseFloat(`${matches[i].score}`) > 0.95) {
+        relevantHistory.push({
+          role: "user",
+          content: matches[i]?.metadata?.content as string,
+          name: matches[i]?.metadata?.username as string,
+          timestamp: matches[i]?.metadata?.timestamp as number,
+        })
+      }
+    }
+    if (relevantHistory.length < 10) {
+      const nextSecondsAgo = [60, 600, 3600, 86400][iteration] || 86400;
+      const additionalHistory = await getRelevantTelegramHistory({
+        query,
+        secondsAgo: secondsAgo + nextSecondsAgo,
+        iteration: iteration + 1,
+      });
+      if (additionalHistory) {
+        relevantHistory = relevantHistory.concat(additionalHistory.slice(0, 10 - relevantHistory.length));
+      }
+    }
+
+    relevantHistory.sort((a, b) => a.timestamp - b.timestamp);
+
+    return relevantHistory;
+  } catch (e) {
+    throw e
   }
 }

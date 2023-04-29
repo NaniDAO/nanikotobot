@@ -1,7 +1,7 @@
 import { Bot } from "grammy";
 import { config } from "dotenv";
 import { getChatCompletion } from "./openai";
-import { searchEmbeddings, storeEmbeddingsWithMetadata } from "./memory";
+import { getRelevantTelegramHistory, searchEmbeddings, storeEmbeddingsWithMetadata } from "./memory";
 import { getSystemPrompt } from "./system_prompt";
 import { ChatCompletionRequestMessage } from 'openai'
 
@@ -38,28 +38,25 @@ bot.on("message", async (ctx) => {
     const results = await searchEmbeddings({
       query: message,
       indexName: "nani-agi",
+      filter: {
+        timestamp:
+      },
       namespace: "telegram",
       topK: 5,
     })
 
-    let history: ChatCompletionRequestMessage[] = []
-    results.matches?.forEach(async (match) => {
-      const content = match?.metadata?.content as string
-      const username = match?.metadata?.username as string
-
-      if (content && username) {
-        history.push({
-          role: "user",
-          name: username,
-          content: content,
-        })
-      }
+    let history: ChatCompletionRequestMessage[] | undefined = await getRelevantTelegramHistory({
+      query: message,
+      secondsAgo: 60,
+    }).then((history) => {
+      return history?.map(({ role, content, name }) => ({ role, content, name }));
     })
 
     console.log('Generated History ->', history)
 
     const response = await getChatCompletion({
       messages: [
+        ...history ?? [],
         {
           role: "user",
           name: author.user.username,
