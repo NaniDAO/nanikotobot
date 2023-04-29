@@ -19,16 +19,17 @@ bot.on("message", async (ctx) => {
     return;
   }
 
-  const response = await getChatCompletion({
-    message: {
-      role: "user",
-      name: author,
-      content: message,
-    }
-  }
-  )
+  if (message.toLowerCase().includes("nani")) { // to make it more conversational 
+    const response = await getChatCompletion({
+      message: {
+        role: "user",
+        name: author,
+        content: message,
+      }
+    })
 
-  ctx.reply(response);
+    ctx.reply(response);
+  }
 });
 
 bot.start();
