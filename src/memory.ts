@@ -192,7 +192,7 @@ export const getRelevantTelegramHistory = async ({
 
     console.log('relevantHistory:', relevantHistory);
 
-    if (relevantHistory.length < 10 && iteration < MAX_ITERATIONS) {
+    if (relevantHistory && relevantHistory.length < 10 && iteration < MAX_ITERATIONS) {
       const nextSecondsAgo = [60, 600, 3600, 86400][iteration] || 86400;
       console.log('Fetching additional history with nextSecondsAgo:', nextSecondsAgo);
       const additionalHistory = await getRelevantTelegramHistory({
@@ -202,7 +202,7 @@ export const getRelevantTelegramHistory = async ({
       });
       console.log('additionalHistory:', additionalHistory);
       if (additionalHistory) {
-        relevantHistory = relevantHistory.concat(additionalHistory.slice(0, 10 - relevantHistory.length));
+        relevantHistory = relevantHistory.concat(additionalHistory?.slice(0, 10 - relevantHistory?.length));
       }
     }
 

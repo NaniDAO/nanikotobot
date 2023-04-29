@@ -44,7 +44,7 @@ bot.on("message", async (ctx) => {
         secondsAgo: 60,
       })
 
-      console.log('Generated History ->', history)
+      console.log('Generated History ->', historicalContext)
 
       let messageChain: ChatCompletionRequestMessage[] = []
       if (ctx.message.reply_to_message?.text) {
