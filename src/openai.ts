@@ -1,7 +1,5 @@
 import { config } from 'dotenv'
 import { OpenAIApi, Configuration, ChatCompletionRequestMessage } from 'openai'
-import { SYSTEM_PROMPT } from './system_prompt'
-
 config()
 
 const configuration = new Configuration({

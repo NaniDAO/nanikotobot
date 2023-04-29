@@ -1,15 +1,23 @@
 {
   "name": "telegram-bot",
   "version": "1.0.0",
-  "description": "",
+  "description": "Telegram bot that uses GPT-3 to chat with users.",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "tsx src/index.ts"
+    "start": "tsx src/index.ts",
+    "dev": "tsx src/index.ts --watch",
+    "build": "tsx src/index.ts --build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "GPT-3",
+    "Telegram",
+    "Chatbot",
+    "AI"
+  ],
+  "author": "Shivanshi Tyagi",
+  "license": "MIT",
   "dependencies": {
     "@pinecone-database/pinecone": "^0.0.14",
     "@types/uuid": "^9.0.1",
