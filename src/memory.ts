@@ -153,6 +153,8 @@ type ChatCompletionRequestMessageWithTimestamp = ChatCompletionRequestMessage & 
 
 const MAX_ITERATIONS = 5;
 
+const MAX_ITERATIONS = 5;
+
 export const getRelevantTelegramHistory = async ({
   query,
   secondsAgo,
@@ -181,7 +183,7 @@ export const getRelevantTelegramHistory = async ({
 
     if (!matches) return []
 
-    const relevantHistory = matches
+    let relevantHistory = matches
       .filter((match) => match.score !== undefined && parseFloat(`${match.score}`) > 0.95)
       .map((match) => ({
         role: "user",
