@@ -1,0 +1,25 @@
+{
+  "name": "telegram-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "tsx src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "0.26.1",
+    "dotenv": "^16.0.3",
+    "grammy": "^1.16.0",
+    "openai": "^3.2.1",
+    "telegraf": "4.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.16.3",
+    "tsx": "^3.12.6",
+    "typescript": "^5.0.4"
+  }
+}
