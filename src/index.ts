@@ -54,18 +54,32 @@ bot.on("message", async (ctx) => {
 
     console.log('Generated History ->', history)
 
+    let messageChain: ChatCompletionRequestMessage[] = []
+    if (ctx.message.reply_to_message?.text) {
+      messageChain.push({
+        role: "user",
+        content: ctx.message.reply_to_message.text,
+        name: ctx.message?.reply_to_message?.from?.username,
+      })
+    }
+
+    messageChain.push({
+      role: "user",
+      content: message,
+      name: author.user.username,
+    })
+
     const response = await getChatCompletion({
       messages: [
         ...history ?? [],
-        {
-          role: "user",
-          name: author.user.username,
-          content: message,
-        }],
+        ...messageChain,
+      ],
       system_prompt: getSystemPrompt()
     })
 
-    const reply = await ctx.reply(response);
+    const reply = await ctx.reply(response, {
+      reply_to_message_id: ctx.message.message_id,
+    });
 
     await storeEmbeddingsWithMetadata({
       document: response,
