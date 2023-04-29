@@ -10,9 +10,11 @@ config()
 
 const bot = new Bot(process.env.TELEGRAM_TOKEN!);
 
-bot.command("start", (ctx) => ctx.reply("Welcome! Up and running."));
+bot.api.getC
 
 bot.on("message", async (ctx) => {
+  console.log('Chat Room ->', ctx.msg.chat.id)
+
   try {
     const message = ctx.message.text
     const author = (await ctx.getAuthor())
@@ -42,7 +44,6 @@ bot.on("message", async (ctx) => {
         secondsAgo: 60,
       })
 
-
       console.log('Generated History ->', history)
 
       let messageChain: ChatCompletionRequestMessage[] = []
@@ -62,7 +63,7 @@ bot.on("message", async (ctx) => {
 
       const relevantHistoricalContext = historicalContext && historicalContext.length > 0 ? await summarizeHistoricalContext({
         historicalContext,
-        query: message,
+        query: messageChain.map((message) => message.content).join('\n'),
       }) : ''
 
       const response = await getChatCompletion({

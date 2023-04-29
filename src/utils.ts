@@ -18,3 +18,16 @@ export const unixTimestampToISO = (timestamp: number) => {
 
   return new Date(timestamp * 1000).toISOString()
 }
+
+const getMessageChain = async (message, chain = []) => {
+  if (message.reply_to_message) {
+    chain.unshift({
+      role: "user",
+      content: message.reply_to_message.text,
+      name: message.reply_to_message.from?.username,
+    });
+    return getMessageChain(message.reply_to_message, chain);
+  } else {
+    return chain;
+  }
+};

@@ -9,6 +9,7 @@ export const summarizeHistoricalContext = async ({
   historicalContext: ChatCompletionRequestMessageWithTimestamp[],
   query: string,
 }) => {
+  console.log('summarizeHistoricalContext called with:', { historicalContext, query })
   const summary = getChatCompletion({
     messages: [],
     system_prompt: `Summarize the following conversation to answer the question in a concise and accurate way: "${query}"
