@@ -63,7 +63,6 @@ export const getChatCompletion = async ({
         ],
         stream: true,
         stop: '/STOP/',
-        max_tokens: 100,
       },
       {
         responseType: 'stream',
