@@ -153,8 +153,6 @@ type ChatCompletionRequestMessageWithTimestamp = ChatCompletionRequestMessage & 
 
 const MAX_ITERATIONS = 5;
 
-const MAX_ITERATIONS = 5;
-
 export const getRelevantTelegramHistory = async ({
   query,
   secondsAgo,
