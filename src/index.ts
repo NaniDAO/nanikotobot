@@ -42,7 +42,7 @@ bot.on("message", async (ctx) => {
     });
 
     if (message.toLowerCase().includes("nani")) {
-      const reply = await ctx.reply('💭', {
+      const reply = await bot.api.sendMessage(ctx.chat.id, '💭', {
         reply_to_message_id: ctx.message.message_id,
       });
 
@@ -52,7 +52,7 @@ bot.on("message", async (ctx) => {
           secondsAgo: 60,
         });
 
-      await ctx.editMessageText("🧠")
+      await bot.api.editMessageText(ctx.chat.id, reply.message_id, '🤔')
       console.log("Generated History ->", historicalContext);
 
       let messageChain: ChatCompletionRequestMessage[] = [];
@@ -70,7 +70,7 @@ bot.on("message", async (ctx) => {
         name: author.user.username,
       });
 
-      await ctx.editMessageText("✍🏼")
+      await bot.api.editMessageText(ctx.chat.id, reply.message_id, '✍🏼')
       const relevantHistoricalContext =
         historicalContext && historicalContext.length > 0
           ? await summarizeHistoricalContext({
@@ -85,7 +85,7 @@ bot.on("message", async (ctx) => {
         system_prompt: getSystemPrompt(relevantHistoricalContext),
         callback: async (msg: string) => {
           streamed_text += msg
-          await ctx.editMessageText(streamed_text)
+          await bot.api.editMessageText(ctx.chat.id, reply.message_id, streamed_text)
         }
       });
 
