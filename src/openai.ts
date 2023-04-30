@@ -83,6 +83,7 @@ export const getChatCompletion = async ({
 
     return reply;
   } catch (e) {
+    console.error(e);
     if (e?.isAxiosError) {
       throw new Error(e);
     } else {

@@ -83,6 +83,7 @@ bot.on("message", async (ctx) => {
       const response = await getChatCompletion({
         messages: [...messageChain],
         system_prompt: getSystemPrompt(relevantHistoricalContext),
+        model: "gpt-3.5-turbo",
         callback: async (msg: string) => {
           streamed_text += msg
           await bot.api.editMessageText(ctx.chat.id, reply.message_id, streamed_text)
