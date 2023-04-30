@@ -52,7 +52,7 @@ bot.on("message", async (ctx) => {
           secondsAgo: 60,
         });
 
-      ctx.editMessageText("🧠")
+      await ctx.editMessageText("🧠")
       console.log("Generated History ->", historicalContext);
 
       let messageChain: ChatCompletionRequestMessage[] = [];
@@ -70,7 +70,7 @@ bot.on("message", async (ctx) => {
         name: author.user.username,
       });
 
-      ctx.editMessageText("✍🏼")
+      await ctx.editMessageText("✍🏼")
       const relevantHistoricalContext =
         historicalContext && historicalContext.length > 0
           ? await summarizeHistoricalContext({
@@ -83,9 +83,9 @@ bot.on("message", async (ctx) => {
       const response = await getChatCompletion({
         messages: [...messageChain],
         system_prompt: getSystemPrompt(relevantHistoricalContext),
-        callback: (msg: string) => {
+        callback: async (msg: string) => {
           streamed_text += msg
-          ctx.editMessageText(streamed_text)
+          await ctx.editMessageText(streamed_text)
         }
       });
 
