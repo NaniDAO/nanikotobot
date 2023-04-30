@@ -23,10 +23,10 @@ bot.on("message", async (ctx) => {
       return;
     }
 
-    if (ctx.chat.id !== -958064712) {
-      ctx.reply("♡ JOIN NANI DAO ---> https://t.me/+NKbETPq0J9UyODk9");
-      return;
-    }
+    // if (ctx.chat.id !== -958064712) {
+    //   ctx.reply("♡ JOIN NANI DAO ---> https://t.me/+NKbETPq0J9UyODk9");
+    //   return;
+    // }
 
     await storeEmbeddingsWithMetadata({
       document: message,
