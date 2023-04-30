@@ -21,13 +21,12 @@ bot.on("message", async (ctx) => {
     const message = ctx.message.text;
     const author = await ctx.getAuthor();
 
-
     if (!message) {
       return;
     }
 
     if (ctx.chat.id !== -958064712) {
-      ctx.reply("Hey! Join NANI DAO here -> https://t.me/+NKbETPq0J9UyODk9 ")
+      ctx.reply("♡ JOIN NANI DAO ---> https://t.me/+NKbETPq0J9UyODk9");
     }
 
     await storeEmbeddingsWithMetadata({
@@ -45,10 +44,7 @@ bot.on("message", async (ctx) => {
 
     console.log("Stored ->", message);
 
-    const isReplyToNani = ctx.msg.reply_to_message?.from?.id  
-
-
-    if (message.toLowerCase().includes("nani") || ) {
+    if (message.toLowerCase().includes("nani")) {
       // to make it more conversational
       const historicalContext: ChatCompletionRequestMessageWithTimestamp[] =
         await getRelevantTelegramHistory({
