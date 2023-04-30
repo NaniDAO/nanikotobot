@@ -40,17 +40,20 @@ export const getChatCompletion = async ({
   messages,
   system_prompt,
   model = "gpt-4",
+  callback,
 }: {
   messages: ChatCompletionRequestMessage[];
   system_prompt: string;
   model?: string;
+  callback: (message: string) => void;
 }): Promise<string> => {
   try {
     let reply = "";
-    const callback = (message: string) => {
+    const internalCallback = (message: string) => {
       console.clear();
       console.log(message);
       reply += message;
+      callback(message);
     };
 
     const response = await openai.createChatCompletion(
@@ -73,7 +76,7 @@ export const getChatCompletion = async ({
 
     for await (const chunk of response.data as unknown as AsyncIterable<Buffer>) {
       const lines = parseChunk(chunk);
-      if (processLines(lines, callback)) {
+      if (processLines(lines, internalCallback)) {
         break;
       }
     }

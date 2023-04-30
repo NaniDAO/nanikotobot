@@ -1,4 +1,3 @@
-import { Bot } from "grammy";
 import { config } from "dotenv";
 import { getChatCompletion } from "./openai";
 import {
@@ -9,10 +8,9 @@ import {
 import { getSystemPrompt } from "./system_prompt";
 import { ChatCompletionRequestMessage } from "openai";
 import { summarizeHistoricalContext } from "./summarize";
+import { bot, textAdmin } from "./telegram";
 
 config();
-
-const bot = new Bot(process.env.TELEGRAM_TOKEN!);
 
 bot.on("message", async (ctx) => {
   console.log("Chat Room ->", ctx.msg.chat.id);
@@ -43,16 +41,18 @@ bot.on("message", async (ctx) => {
       namespace: "telegram",
     });
 
-    console.log("Stored ->", message);
-
     if (message.toLowerCase().includes("nani")) {
-      // to make it more conversational
+      const reply = await ctx.reply('💭', {
+        reply_to_message_id: ctx.message.message_id,
+      });
+
       const historicalContext: ChatCompletionRequestMessageWithTimestamp[] =
         await getRelevantTelegramHistory({
           query: message,
           secondsAgo: 60,
         });
 
+      ctx.editMessageText("🧠")
       console.log("Generated History ->", historicalContext);
 
       let messageChain: ChatCompletionRequestMessage[] = [];
@@ -70,21 +70,23 @@ bot.on("message", async (ctx) => {
         name: author.user.username,
       });
 
+      ctx.editMessageText("✍🏼")
       const relevantHistoricalContext =
         historicalContext && historicalContext.length > 0
           ? await summarizeHistoricalContext({
-              historicalContext,
-              query: messageChain.map((message) => message.content).join("\n"),
-            })
+            historicalContext,
+            query: messageChain.map((message) => message.content).join("\n"),
+          })
           : "";
 
+      let streamed_text = ''
       const response = await getChatCompletion({
         messages: [...messageChain],
         system_prompt: getSystemPrompt(relevantHistoricalContext),
-      });
-
-      const reply = await ctx.reply(response, {
-        reply_to_message_id: ctx.message.message_id,
+        callback: (msg: string) => {
+          streamed_text += msg
+          ctx.editMessageText(streamed_text)
+        }
       });
 
       await storeEmbeddingsWithMetadata({
@@ -99,17 +101,10 @@ bot.on("message", async (ctx) => {
         indexName: "nani-agi",
         namespace: "telegram",
       });
-
-      console.log("Stored ->", response);
     }
   } catch (e) {
     console.error(e);
-    bot.api.sendMessage(
-      ctx.msg.chat.id,
-      `Error @nerderlyne -> ${
-        e instanceof Error ? e?.message : "Unknown Error"
-      }`
-    );
+    await textAdmin(`Error @nerderlyne -> ${e instanceof Error ? e?.message : "Unknown Error"}`);
   }
 });
 

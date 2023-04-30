@@ -112,6 +112,8 @@ export const storeEmbeddingsWithMetadata = async ({
     }
 
     const response: UpsertResponse = await index.upsert({ upsertRequest })
+
+    console.log("Stored ->", response);
     return response
   } catch (error) {
     console.error('Error upserting embeddings:', error)
