@@ -155,6 +155,18 @@ export const searchEmbeddings = async ({
   }
 }
 
+const getUniqueMessages = (messages) => {
+  const seen = new Set();
+  return messages.filter((message) => {
+    const key = `${message.content}-${message.timestamp}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+};
+
 export const getRelevantTelegramHistory = async ({
   query,
   secondsAgo,
@@ -184,13 +196,15 @@ export const getRelevantTelegramHistory = async ({
     if (!matches) return []
 
     let relevantHistory = matches
-      .filter((match) => match.score !== undefined && parseFloat(`${match.score}`) > 0.95)
+      .filter((match) => match.score !== undefined && parseFloat(`${match.score}`) > 0.80)
       .map((match) => ({
         role: "user",
         content: match.metadata?.content as string,
         name: match.metadata?.username as string,
         timestamp: match.metadata?.timestamp as number,
       }));
+
+    relevantHistory = getUniqueMessages(relevantHistory);
 
     console.log('relevantHistory:', relevantHistory);
 
