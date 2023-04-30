@@ -10,6 +10,7 @@ export const summarizeHistoricalContext = async ({
   query: string,
 }) => {
   console.log('summarizeHistoricalContext called with:', { historicalContext, query })
+  let text = ''
   const summary = getChatCompletion({
     messages: [],
     system_prompt: `Summarize the following conversation to answer the question in a concise and accurate way: "${query}"
@@ -19,7 +20,12 @@ export const summarizeHistoricalContext = async ({
       return `${message?.name ?? message.role}: ${message.content} (${unixTimestampToISO(message?.timestamp)})`
     }).join('\n')}
     `,
-    model: "gpt-3.5-turbo"
+    model: "gpt-3.5-turbo",
+    callback: (message) => {
+      console.clear()
+      text += message
+      console.log(text)
+    }
   })
 
   return summary
