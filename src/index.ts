@@ -84,11 +84,14 @@ bot.on("message", async (ctx) => {
         messages: [...messageChain],
         system_prompt: getSystemPrompt(relevantHistoricalContext),
         model: "gpt-3.5-turbo",
-        callback: async (msg: string) => {
-          streamed_text += msg
-          await bot.api.editMessageText(ctx.chat.id, reply.message_id, streamed_text)
+        callback: (message) => {
+          console.clear()
+          streamed_text += message
+          console.log(streamed_text)
         }
       });
+
+      await bot.api.editMessageText(ctx.chat.id, reply.message_id, response)
 
       await storeEmbeddingsWithMetadata({
         document: response,
