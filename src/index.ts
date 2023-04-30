@@ -93,18 +93,20 @@ bot.on("message", async (ctx) => {
 
       await bot.api.editMessageText(ctx.chat.id, reply.message_id, response)
 
-      await storeEmbeddingsWithMetadata({
-        document: response,
-        metadata: {
-          content: response,
-          username: reply.from?.username,
-          user_id: reply.from?.id,
-          id: reply.message_id,
-          timestamp: reply.date,
-        },
-        indexName: "nani-agi",
-        namespace: "telegram",
-      });
+      if (response.length > 0) {
+        await storeEmbeddingsWithMetadata({
+          document: response,
+          metadata: {
+            content: response,
+            username: reply.from?.username,
+            user_id: reply.from?.id,
+            id: reply.message_id,
+            timestamp: reply.date,
+          },
+          indexName: "nani-agi",
+          namespace: "telegram",
+        });
+      }
     }
   } catch (e) {
     console.error(e);
