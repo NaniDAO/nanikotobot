@@ -23,10 +23,10 @@ bot.on("message", async (ctx) => {
       return;
     }
 
-    // if (ctx.chat.id !== -958064712) {
-    //   ctx.reply("♡ JOIN NANI DAO ---> https://t.me/+NKbETPq0J9UyODk9");
-    //   return;
-    // }
+    if (ctx.chat.id !== -958064712) {
+      ctx.reply("♡ JOIN NANI DAO ---> https://t.me/+NKbETPq0J9UyODk9");
+      return;
+    }
 
     await storeEmbeddingsWithMetadata({
       document: message,
@@ -42,17 +42,12 @@ bot.on("message", async (ctx) => {
     });
 
     if (message.toLowerCase().includes("nani")) {
-      const reply = await bot.api.sendMessage(ctx.chat.id, '💭', {
-        reply_to_message_id: ctx.message.message_id,
-      });
-
       const historicalContext: ChatCompletionRequestMessageWithTimestamp[] =
         await getRelevantTelegramHistory({
           query: message,
           secondsAgo: 60,
         });
 
-      await bot.api.editMessageText(ctx.chat.id, reply.message_id, '🤔')
       console.log("Generated History ->", historicalContext);
 
       let messageChain: ChatCompletionRequestMessage[] = [];
@@ -70,7 +65,7 @@ bot.on("message", async (ctx) => {
         name: author.user.username,
       });
 
-      await bot.api.editMessageText(ctx.chat.id, reply.message_id, '✍🏼')
+
       const relevantHistoricalContext =
         historicalContext && historicalContext.length > 0
           ? await summarizeHistoricalContext({
@@ -91,7 +86,9 @@ bot.on("message", async (ctx) => {
         }
       });
 
-      await bot.api.editMessageText(ctx.chat.id, reply.message_id, response)
+      const reply = await bot.api.sendMessage(ctx.chat.id, response, {
+        reply_to_message_id: ctx.message.message_id,
+      });
 
       if (response.length > 0) {
         await storeEmbeddingsWithMetadata({
