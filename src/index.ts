@@ -27,6 +27,7 @@ bot.on("message", async (ctx) => {
 
     if (ctx.chat.id !== -958064712) {
       ctx.reply("♡ JOIN NANI DAO ---> https://t.me/+NKbETPq0J9UyODk9");
+      return;
     }
 
     await storeEmbeddingsWithMetadata({
