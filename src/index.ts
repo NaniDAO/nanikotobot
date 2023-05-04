@@ -41,12 +41,12 @@ bot.on("message", async (ctx) => {
       namespace: "telegram",
     });
 
-    if (message.toLowerCase().includes("nani")) {
+  
       const historicalContext: ChatCompletionRequestMessageWithTimestamp[] =
         await getRelevantTelegramHistory({
-          query: message,
+          query: message.toLowerCase(),
           secondsAgo: 60,
-        });
+      });
 
       console.log("Generated History ->", historicalContext);
 
@@ -104,7 +104,7 @@ bot.on("message", async (ctx) => {
           namespace: "telegram",
         });
       }
-    }
+    
   } catch (e) {
     console.error(e);
     await textAdmin(`Error @nerderlyne -> ${e instanceof Error ? e?.message : "Unknown Error"}`);
