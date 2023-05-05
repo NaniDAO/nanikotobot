@@ -61,6 +61,10 @@ export type EmbeddingResult = {
   embedding: number[];
 };
 
+const prepareDocument = (document: string): string => {
+  return document.toLowerCase().replace(/[^a-z\s]+/g, ' ');
+}
+
 export const generateEmbeddings = async (
   document: string
 ): Promise<
@@ -70,7 +74,7 @@ export const generateEmbeddings = async (
   }[]
 > => {
   try {
-    const tokens = tokenize(document);
+    const tokens = tokenize(prepareDocument(document));
     const tokenChunks = chunkTokens(tokens);
 
     const embeddings = await Promise.all(tokenChunks.map(createEmbedding));
