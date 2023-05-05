@@ -16,7 +16,7 @@ config();
 
 const bot = createTelegramBot();
 
-const handleNewMessage = async (
+export const handleNewMessage = async (
   ctx: Context
 ) => {
   try {
@@ -133,27 +133,3 @@ const handleNewMessage = async (
   }
 };
 
-bot.on("message", async (ctx) => {
- 
-});
-
-export const initalizeTelegramBot = async () => {
-  try {
-    const bot = createTelegramBot();
-
-    bot.on("message", async (ctx) => handleNewMessage(ctx));
-
-    bot.start();
-
-    console.log("Telegram Bot Started!");
-
-    bot.catch(console.error);
-  } catch (e) {
-    console.error(e);
-    await textAdmin(
-      `Error @nerderlyne -> ${
-        e instanceof Error ? e?.message : "Unknown Error"
-      }`
-    );
-  }
-};

@@ -1,3 +1,10 @@
-import { initalizeTelegramBot } from "@/telegram";
+import { handleNewMessage } from "./telegram";
+import { createTelegramBot } from "./telegram/utils";
 
-initalizeTelegramBot();
+const bot = createTelegramBot();
+
+bot.start();
+
+bot.on("message", async (ctx) => handleNewMessage(ctx));
+
+bot.catch(console.error);

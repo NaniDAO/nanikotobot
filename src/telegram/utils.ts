@@ -4,6 +4,14 @@ import { memoize } from "lodash-es";
 
 config();
 
+export const createTelegramBot = memoize(() => {
+    const token = process.env.TELEGRAM_TOKEN;
+    
+    if (!token) throw Error("TELEGRAM_TOKEN is not configured!");
+  
+    return new Bot(process.env.TELEGRAM_TOKEN!)
+});
+
 export const textAdmin = async (message: string) => {
   try {
     const bot = createTelegramBot();
@@ -12,11 +20,3 @@ export const textAdmin = async (message: string) => {
     console.log(e);
   }
 };
-
-export const createTelegramBot = memoize(() => {
-    const token = process.env.TELEGRAM_TOKEN;
-    
-    if (!token) throw Error("TELEGRAM_TOKEN is not configured!");
-  
-    return new Bot(process.env.TELEGRAM_TOKEN!)
-});
