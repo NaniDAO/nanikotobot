@@ -1,6 +1,6 @@
 import { Bot } from "grammy";
 import { config } from "dotenv";
-import { memoize } from "lodash";
+import { memoize } from "lodash-es";
 
 config();
 

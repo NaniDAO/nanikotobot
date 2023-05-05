@@ -8,8 +8,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "tsx src/index.ts",
     "dev": "tsx src/index.ts --watch",
-    "format": "prettier --write 'src/**/*.ts' --cache",
-    "build": "tsx src/index.ts --build"
+    "build": "tsx src/index.ts --build",
+    "format": "prettier --write 'src/**/*.ts' --cache"
   },
   "keywords": [
     "GPT-3",
@@ -26,13 +26,13 @@
     "dotenv": "^16.0.3",
     "gpt-3-encoder": "^1.1.4",
     "grammy": "^1.16.0",
-    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "openai": "^3.2.1",
     "twitter-autohook": "^1.7.2",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.194",
+    "@types/lodash-es": "^4.17.7",
     "@types/node": "^18.16.3",
     "prettier": "^2.8.8",
     "tsx": "^3.12.6",
