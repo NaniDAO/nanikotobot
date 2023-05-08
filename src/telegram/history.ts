@@ -18,11 +18,18 @@ const __dirname = path.dirname(__filename);
 const historyFilePath = path.join(__dirname, '..', '..', 'store', 'history.json');
 
 const getHistoryFromFile = (): Message[] => {
-    if (!fs.existsSync(historyFilePath)) {
-        fs.writeFileSync(historyFilePath, JSON.stringify([]));
+    let history = [];
+
+    try {
+      const data = fs.readFileSync('history.json', 'utf8');
+      if (data.length > 0) {
+        history = JSON.parse(data);
+      }
+    } catch (err) {
+      console.error(err);
     }
-    const historyData = fs.readFileSync(historyFilePath, 'utf-8');
-    return JSON.parse(historyData);
+  
+    return history;
 };
 
 const updateHistoryFile = (history: Message[]): void => {
