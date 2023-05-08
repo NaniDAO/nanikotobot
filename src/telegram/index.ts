@@ -78,12 +78,11 @@ export const handleNewMessage = async (
       });
     });
 
-    console.log("messageChain", messageChain, messageChain[messageChain.length - 1]);
+    console.log("messageChain",  messageChain.slice(-3));
 
     const relevantHistoricalContext = await getHistoricalContext(
       {
-        history: [messageChain[messageChain.length - 3]],
-      
+        history: messageChain.slice(-3),
       }
     );
 

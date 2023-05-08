@@ -33,7 +33,12 @@ const getHistoryFromFile = (): Message[] => {
 };
 
 const updateHistoryFile = (history: Message[]): void => {
-    fs.writeFileSync(historyFilePath, JSON.stringify(history));
+    try {
+        fs.writeFileSync(historyFilePath, JSON.stringify(history));
+    } catch (err) {
+        console.error(err);
+        throw new Error(`Error updating history file: ${err}`);
+    }
 };
 
 const addMessageToHistory = (username: string, message: string, timestamp: number): Message[] => {
@@ -90,6 +95,7 @@ export const getHistoricalContext = async ({
     try {
 
     let context = ''
+    console.log("history", history)
  
     const query = history.map((message) => message.content).join(' ')
 
