@@ -1,14 +1,12 @@
 import { config } from "dotenv";
 import { getChatCompletion } from "../llm/openai";
-import {
-  storeEmbeddingsWithMetadata,
-} from "../memory";
 import { TELEGRAM_SYSTEM_PROMPT } from "./prompt";
 import { ChatCompletionRequestMessage } from "openai";
-import { createTelegramBot, textAdmin } from "@/telegram/utils";
+import { createMessaeToSave, createTelegramBot, textAdmin } from "@/telegram/utils";
 import { Context } from "grammy";
 import { interpolateTemplate } from "@/llm/utils";
 import { updateHistory, getHistory, getHistoricalContext } from "./history";
+import { addToNani } from "@/memory/utils";
 
 config();
 
@@ -55,18 +53,13 @@ export const handleNewMessage = async (
       ctx.message.date
     )
 
-    await storeEmbeddingsWithMetadata({
-      document: message,
-      metadata: {
-        content: message,
-        username: author.user.username,
-        user_id: author.user.id,
-        id: ctx.message.message_id,
-        timestamp: ctx.message.date,
-      },
-      indexName: "nani-agi",
-      namespace: "telegram",
-    });
+    await addToNani(
+      createMessaeToSave(
+        author.user.username ?? '',
+        ctx.message.text,
+      ),
+      "telegram"
+    )
 
     let messageChain: ChatCompletionRequestMessage[] = [];
     let msgHistory = await getHistory(5);
@@ -100,18 +93,13 @@ export const handleNewMessage = async (
     });
 
     if (response.length > 0) {
-      await storeEmbeddingsWithMetadata({
-        document: response,
-        metadata: {
-          content: response,
-          username: reply.from?.username,
-          user_id: reply.from?.id,
-          id: reply.message_id,
-          timestamp: reply.date,
-        },
-        indexName: "nani-agi",
-        namespace: "telegram",
-      });
+      await addToNani(
+        createMessaeToSave(
+          response,
+          reply.from?.username ?? '',
+        ),
+        "telegram"
+      )
     }
     updateHistory(
       reply.from?.username ?? '',

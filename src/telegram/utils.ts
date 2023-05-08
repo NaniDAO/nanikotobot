@@ -33,3 +33,7 @@ export const extractKeywords = (query: string, numKeywords: number = 5): string[
 
   return keywords;
 };
+
+export const createMessaeToSave = (message: string, author: string) => {
+  return `@${author} -> ${message}`
+}
