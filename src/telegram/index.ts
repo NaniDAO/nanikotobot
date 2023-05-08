@@ -2,15 +2,13 @@ import { config } from "dotenv";
 import { getChatCompletion } from "../llm/openai";
 import { TELEGRAM_SYSTEM_PROMPT } from "./prompt";
 import { ChatCompletionRequestMessage } from "openai";
-import { createMessaeToSave, createTelegramBot, textAdmin } from "@/telegram/utils";
+import { createMessaeToSave, textAdmin } from "@/telegram/utils";
 import { Context } from "grammy";
 import { interpolateTemplate } from "@/llm/utils";
 import { updateHistory, getHistory, getHistoricalContext } from "./history";
 import { addToNani } from "@/memory/utils";
 
 config();
-
-const bot = createTelegramBot();
 
 export const handleNewMessage = async (
   ctx: Context
@@ -88,7 +86,7 @@ export const handleNewMessage = async (
       callback: (message) => {},
     });
 
-    const reply = await bot.api.sendMessage(ctx.chat.id, response, {
+    const reply = await ctx.api.sendMessage(ctx.chat.id, response, {
       reply_to_message_id: ctx.message.message_id,
     });
 
@@ -109,6 +107,7 @@ export const handleNewMessage = async (
   } catch (e) {
     console.error(e);
     await textAdmin(
+      ctx,
       `Error @nerderlyne -> ${
         e instanceof Error ? e?.message : "Unknown Error"
       }`

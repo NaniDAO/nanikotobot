@@ -1,4 +1,4 @@
-import { Bot } from "grammy";
+import { Bot, Context } from "grammy";
 import { config } from "dotenv";
 import { memoize } from "lodash-es";
 import natural from 'natural';
@@ -13,10 +13,9 @@ export const createTelegramBot = memoize(() => {
     return new Bot(process.env.TELEGRAM_TOKEN!)
 });
 
-export const textAdmin = async (message: string) => {
+export const textAdmin = async (ctx: Context, message: string) => {
   try {
-    const bot = createTelegramBot();
-    await bot.api.sendMessage(process.env.ADMIN_CHAT_ID!, message);
+    await ctx.api.sendMessage(process.env.ADMIN_CHAT_ID!, message);
   } catch (e) {
     console.log(e);
   }
