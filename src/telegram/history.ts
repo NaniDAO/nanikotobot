@@ -21,7 +21,7 @@ const getHistoryFromFile = (): Message[] => {
     let history = [];
 
     try {
-      const data = fs.readFileSync('history.json', 'utf8');
+      const data = fs.readFileSync(historyFilePath, 'utf8');
       if (data.length > 0) {
         history = JSON.parse(data);
       }
