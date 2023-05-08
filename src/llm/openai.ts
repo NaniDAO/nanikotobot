@@ -1,5 +1,7 @@
 import { config } from "dotenv";
+import { memoize } from "lodash-es";
 import { OpenAIApi, Configuration, ChatCompletionRequestMessage } from "openai";
+import { AxiosError } from "axios";
 
 config();
 
@@ -8,6 +10,21 @@ const configuration = new Configuration({
 });
 
 export const openai = new OpenAIApi(configuration);
+
+export const contextWindowSize = {
+  'gpt-3.5-turbo': 4000,
+  'gpt-4': 4000,
+};
+
+export const createLlmClient = memoize(() => {
+  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not set")
+
+  const configuration = new Configuration({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  return new OpenAIApi(configuration);
+})
 
 const parseChunk = (chunk: Buffer): string[] =>
   chunk
@@ -40,18 +57,18 @@ export const getChatCompletion = async ({
   messages,
   system_prompt,
   model = "gpt-4",
+  max_tokens,
   callback,
 }: {
   messages: ChatCompletionRequestMessage[];
   system_prompt: string;
   model?: string;
   callback: (message: string) => void;
+  max_tokens?: number;
 }): Promise<string> => {
   try {
     let reply = "";
     const internalCallback = (message: string) => {
-      console.clear();
-      console.log(message);
       reply += message;
       callback(message);
     };
@@ -68,6 +85,8 @@ export const getChatCompletion = async ({
         ],
         stream: true,
         stop: "/STOP/",
+        max_tokens,
+        temperature: 1,
       },
       {
         responseType: "stream",
@@ -83,11 +102,17 @@ export const getChatCompletion = async ({
 
     return reply;
   } catch (e) {
-    console.error(e);
-    if (e?.isAxiosError) {
-      throw new Error(e);
-    } else {
-      throw new Error("Unknown Error");
+    const { response } = e as AxiosError;
+    switch (response?.status) {
+      case 400:
+        throw Error(`Context window is full.`);
+      case 404:
+        throw Error(`Model '${model}' is unavailable.`);
+      case 429:
+        throw Error(`OpenAI rate limited.`);
+      
+      default:
+        throw e;
     }
   }
 };

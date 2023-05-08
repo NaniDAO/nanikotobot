@@ -8,3 +8,4 @@ bot.start();
 bot.on("message", async (ctx) => handleNewMessage(ctx));
 
 bot.catch(console.error);
+

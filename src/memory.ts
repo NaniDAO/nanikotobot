@@ -6,9 +6,12 @@ import {
 } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch";
 import { encode, decode } from "gpt-3-encoder";
 import { getVectorId } from "@/utils";
-import { openai } from "@/llm/openai";
 import { getTimestampAt } from "@/utils";
 import { ChatCompletionRequestMessage } from "openai";
+import { createMilvusClient } from "./memory/utils";
+import { normalize } from "./memory/generateEmbeddings";
+
+
 
 export type ChatCompletionRequestMessageWithTimestamp =
   ChatCompletionRequestMessage & {
@@ -28,66 +31,6 @@ const tokenize = (text: string): number[] => {
   return encode(text);
 };
 
-const chunkTokens = (tokens: number[], chunkSize = 8191): number[][] => {
-  return tokens.reduce((chunks: number[][], token: number) => {
-    const lastChunk = chunks[chunks.length - 1];
-
-    if (!lastChunk || lastChunk.length === chunkSize) {
-      chunks.push([token]);
-    } else {
-      lastChunk.push(token);
-    }
-
-    return chunks;
-  }, []);
-};
-
-const createEmbedding = async (tokens: number[]): Promise<number[]> => {
-  try {
-    const response = await openai.createEmbedding({
-      model: "text-embedding-ada-002",
-      input: tokens,
-    });
-
-    return response.data.data[0].embedding;
-  } catch (error) {
-    console.error("Error creating embedding:", error);
-    throw error;
-  }
-};
-
-export type EmbeddingResult = {
-  chunk: string;
-  embedding: number[];
-};
-
-const prepareDocument = (document: string): string => {
-  return document.toLowerCase().replace(/[^a-z\s]+/g, ' ');
-}
-
-export const generateEmbeddings = async (
-  document: string
-): Promise<
-  {
-    chunk: string;
-    embedding: number[];
-  }[]
-> => {
-  try {
-    const tokens = tokenize(prepareDocument(document));
-    const tokenChunks = chunkTokens(tokens);
-
-    const embeddings = await Promise.all(tokenChunks.map(createEmbedding));
-
-    return tokenChunks.map((chunk, index) => ({
-      chunk: decode(chunk),
-      embedding: embeddings[index],
-    }));
-  } catch (error) {
-    console.error("Error generating embeddings:", error);
-    throw error;
-  }
-};
 
 export const storeEmbeddingsWithMetadata = async ({
   document,
@@ -126,39 +69,22 @@ export const storeEmbeddingsWithMetadata = async ({
   }
 };
 
-export const searchEmbeddings = async ({
-  query,
-  indexName,
-  filter,
-  namespace,
-  topK = 10,
-}: {
-  query: string;
-  indexName: string;
-  filter?: object;
-  namespace?: string;
-  topK?: number;
-}): Promise<QueryResponse> => {
-  try {
-    const embeddings = await generateEmbeddings(query);
-    const index = pinecone.Index(indexName);
-
-    const queryRequest: QueryRequest = {
-      vector: embeddings[0].embedding,
-      topK,
+export const getAllPincone = async () => {
+  const index = pinecone.Index("nani-agi");
+  const searchVector = [...Array(1536)].map(() => Math.random());
+  const response = await index.query({
+    queryRequest: {
+      vector: searchVector,
+      topK: 10000,
       includeValues: true,
       includeMetadata: true,
-      filter,
-      namespace,
-    };
+      filter: {},
+      namespace: "telegram",
+    },
+  });
 
-    const response: QueryResponse = await index.query({ queryRequest });
-    return response;
-  } catch (error) {
-    console.error("Error querying embeddings:", error);
-    throw error;
-  }
-};
+  return response.matches
+}
 
 const getUniqueMessages = (messages) => {
   const seen = new Set();
@@ -172,85 +98,49 @@ const getUniqueMessages = (messages) => {
   });
 };
 
-export const getRelevantTelegramHistory = async ({
-  query,
-  secondsAgo,
-  iteration = 0,
-}: {
-  query: string;
-  secondsAgo: number;
-  iteration?: number;
-}): Promise<ChatCompletionRequestMessageWithTimestamp[]> => {
-  console.log("getRelevantTelegramHistory called with:", {
-    query,
-    secondsAgo,
-    iteration,
-  });
-
-  try {
-    const matches = (
-      await searchEmbeddings({
-        query,
-        indexName: "nani-agi",
-        topK: 10,
-        namespace: "telegram",
-        filter: {
-          timestamp: {
-            $gte: getTimestampAt(secondsAgo),
-          },
-        },
-      })
-    ).matches;
-
-    console.log("matches:", matches);
-
-    if (!matches) return [];
-
-    let relevantHistory = matches
-      .filter(
-        (match) =>
-          match.score !== undefined && parseFloat(`${match.score}`) > 0.8
-      )
-      .map((match) => ({
-        role: "user",
-        content: match.metadata?.content as string,
-        name: match.metadata?.username as string,
-        timestamp: match.metadata?.timestamp as number,
-      }));
-
-    relevantHistory = getUniqueMessages(relevantHistory);
-
-    console.log("relevantHistory:", relevantHistory);
-
-    if (
-      relevantHistory &&
-      relevantHistory.length < 10 &&
-      iteration < MAX_ITERATIONS
-    ) {
-      const nextSecondsAgo = [60, 600, 3600, 86400][iteration] || 86400;
-      console.log(
-        "Fetching additional history with nextSecondsAgo:",
-        nextSecondsAgo
-      );
-      const additionalHistory = await getRelevantTelegramHistory({
-        query,
-        secondsAgo: secondsAgo + nextSecondsAgo,
-        iteration: iteration + 1,
-      });
-      console.log("additionalHistory:", additionalHistory);
-      if (additionalHistory) {
-        relevantHistory = relevantHistory.concat(
-          additionalHistory?.slice(0, 10 - relevantHistory?.length)
-        );
-      }
+export const migrateFromPineconeToMilvus = async () => {
+  const matches = await getAllPincone();
+  console.log("Got matches", matches?.length)
+  if (!matches) return;
+  // we want to normalize the vectors
+  const vectors = matches.map((match) => { 
+    if (!match) {
+      throw new Error("No match");
+    }
+    if (!match.values) {
+      throw new Error("No values");
+    }
+    if (!match.metadata)  {
+      throw new Error("No metadata");
     }
 
-    relevantHistory.sort((a, b) => a.timestamp - b.timestamp);
+    if (!match.metadata.username) {
+      throw new Error("No username");
+    }
+  
+    return ({
+    embedding: normalize(match.values),
+    source: 'telegram',
+    timestamp: match.metadata.timestamp,
+    content: `@${match.metadata.username} -> ${match.metadata.content}`,
+  })});
 
-    console.log("Final relevantHistory:", relevantHistory);
-    return relevantHistory;
-  } catch (e) {
-    console.error("Error in getRelevantTelegramHistory:", e);
-    throw e;
-  }
+  console.log("Got vectors", vectors?.length)
+  console.log("Example vector", vectors?.[0])
+
+  const client = createMilvusClient();
+  await client.insert({
+    collection_name: "nani",
+    fields_data: vectors,
+    timeout: 100000,
+  });
+};
+
+
+export const getRelevantTelegramHistory = async ({
+  query,
+}: {
+  query: string;
+}): Promise<string> => {
+  
 };

@@ -1,6 +1,7 @@
 import { Bot } from "grammy";
 import { config } from "dotenv";
 import { memoize } from "lodash-es";
+import natural from 'natural';
 
 config();
 
@@ -19,4 +20,16 @@ export const textAdmin = async (message: string) => {
   } catch (e) {
     console.log(e);
   }
+};
+
+
+export const extractKeywords = (query: string, numKeywords: number = 5): string[] => {
+  const tfidf = new natural.TfIdf();
+  tfidf.addDocument(query);
+
+  const keywords = tfidf.listTerms(0)
+    .slice(0, numKeywords)
+    .map((term) => term.term.toLowerCase());
+
+  return keywords;
 };

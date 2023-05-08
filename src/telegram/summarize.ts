@@ -13,27 +13,40 @@ export const summarizeHistoricalContext = async ({
     historicalContext,
     query,
   });
-  let text = "";
-  const summary = getChatCompletion({
-    messages: [],
-    system_prompt: `Summarize the following conversation to answer the question in a concise and accurate way: "${query}"
 
-    Conversation:
-    ${historicalContext
-      .map((message) => {
-        return `${message?.name ?? message.role}: ${
-          message.content
-        } (${unixTimestampToISO(message?.timestamp)})`;
-      })
-      .join("\n")}
-    `,
+  const messages = historicalContext.map((message) => {
+    return `${message.content}`;
+  }).join('\n\n');
+  console.log("messages:", messages)
+
+  const prompt = `The following text contains information related to the question: "${query}". Your task is to read the text, extract the relevant information, and provide a concise and accurate summary that directly answers the question. Ignore any unrelated content. The summary should be no more than 300 words.
+
+  Text to Analyze:
+  \`\`\`
+  ${messages}
+  \`\`\`
+
+  Please provide a summary that answers the question:`;
+
+  const summary = await getChatCompletion({
+    messages: [
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+    system_prompt: '',
     model: "gpt-3.5-turbo",
+    max_tokens: 500,
     callback: (message) => {
-      console.clear();
-      text += message;
-      console.log(text);
-    },
+      console.log('.')
+      console.log(message)
+    }
   });
+  
+
+  console.log("summary:", summary, summary.length)
+
 
   return summary;
 };

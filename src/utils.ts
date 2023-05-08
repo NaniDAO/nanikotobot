@@ -1,4 +1,5 @@
 import { v4 as uuid } from "uuid";
+import { encode } from "gpt-3-encoder";
 
 export const getVectorId = () => {
   return uuid().toString();
@@ -18,3 +19,9 @@ export const unixTimestampToISO = (timestamp: number) => {
 
   return new Date(timestamp * 1000).toISOString();
 };
+
+export const AVG_CHARACTERS_PER_TOKEN = 4
+
+export const countTokens = (text: string) => {
+  return encode(text).length;
+}

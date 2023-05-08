@@ -1,16 +1,14 @@
 import { config } from "dotenv";
 import { getChatCompletion } from "../llm/openai";
 import {
-  ChatCompletionRequestMessageWithTimestamp,
-  getRelevantTelegramHistory,
   storeEmbeddingsWithMetadata,
 } from "../memory";
 import { TELEGRAM_SYSTEM_PROMPT } from "./prompt";
 import { ChatCompletionRequestMessage } from "openai";
-import { summarizeHistoricalContext } from "./summarize";
 import { createTelegramBot, textAdmin } from "@/telegram/utils";
 import { Context } from "grammy";
 import { interpolateTemplate } from "@/llm/utils";
+import { updateHistory, getHistory, getHistoricalContext } from "./history";
 
 config();
 
@@ -47,6 +45,16 @@ export const handleNewMessage = async (
       return;
     }
 
+    if (!ctx.message.text) {
+      return 
+    }
+
+    updateHistory(
+      author.user.username ?? '',
+      ctx.message.text,
+      ctx.message.date
+    )
+
     await storeEmbeddingsWithMetadata({
       document: message,
       metadata: {
@@ -60,49 +68,31 @@ export const handleNewMessage = async (
       namespace: "telegram",
     });
 
-    const historicalContext: ChatCompletionRequestMessageWithTimestamp[] =
-      await getRelevantTelegramHistory({
-        query: message.toLowerCase(),
-        secondsAgo: 60,
-      });
-
-    console.log("Generated History ->", historicalContext);
-
     let messageChain: ChatCompletionRequestMessage[] = [];
-    if (ctx.message.reply_to_message?.text) {
+    let msgHistory = await getHistory(5);
+    msgHistory.forEach((msg) => {
       messageChain.push({
         role: "user",
-        content: ctx.message.reply_to_message.text,
-        name: ctx.message?.reply_to_message?.from?.username,
+        content: msg.message,
+        name: msg.username,
       });
-    }
-
-    messageChain.push({
-      role: "user",
-      content: message,
-      name: author.user.username,
     });
 
-    const relevantHistoricalContext =
-      historicalContext && historicalContext.length > 0
-        ? await summarizeHistoricalContext({
-            historicalContext,
-            query: messageChain.map((message) => message.content).join("\n"),
-          })
-        : "";
+    const relevantHistoricalContext = await getHistoricalContext(
+      {
+        query: `
+          ${msgHistory[-1].username}:${msgHistory[-1].message}
+        `
+      }
+    );
 
-    let streamed_text = "";
     const response = await getChatCompletion({
       messages: [...messageChain],
       system_prompt: interpolateTemplate(TELEGRAM_SYSTEM_PROMPT, {
         context: relevantHistoricalContext,
       }),
       model: "gpt-4",
-      callback: (message) => {
-        console.clear();
-        streamed_text += message;
-        console.log(streamed_text);
-      },
+      callback: (message) => {},
     });
 
     const reply = await bot.api.sendMessage(ctx.chat.id, response, {
@@ -123,6 +113,11 @@ export const handleNewMessage = async (
         namespace: "telegram",
       });
     }
+    updateHistory(
+      reply.from?.username ?? '',
+      response,
+      reply.date
+    )
   } catch (e) {
     console.error(e);
     await textAdmin(
