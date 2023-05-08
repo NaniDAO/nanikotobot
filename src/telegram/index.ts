@@ -2,7 +2,7 @@ import { config } from "dotenv";
 import { getChatCompletion } from "../llm/openai";
 import { TELEGRAM_SYSTEM_PROMPT } from "./prompt";
 import { ChatCompletionRequestMessage } from "openai";
-import { createMessaeToSave, textAdmin } from "@/telegram/utils";
+import { createMessageToSave, textAdmin } from "@/telegram/utils";
 import { Context } from "grammy";
 import { interpolateTemplate } from "@/llm/utils";
 import { updateHistory, getHistory, getHistoricalContext } from "./history";
@@ -35,12 +35,15 @@ export const handleNewMessage = async (
     if (!groupId) {
       throw new Error("TELEGRAM_CHAT_ID is not configured!");
     }
-    let adminId = process.env.TELEGRAM_ADMIN_ID;
+    let adminId = process.env.ADMIN_CHAT_ID;
     if (!adminId) {
-      throw new Error("TELEGRAM_ADMIN_ID is not configured!");
+      throw new Error("ADMIN_CHAT_ID is not configured!");
     }
 
-    if (ctx.chat.id.toString() != groupId || ctx.chat.id.toString() != adminId) {
+    // check if the message is from group or admin 
+   
+    
+    if (ctx.chat.id.toString() != groupId.toString() && ctx.chat.id.toString() != adminId.toString()) {
       ctx.reply("♡ JOIN NANI DAO ---> https://t.me/+NKbETPq0J9UyODk9");
       return;
     }
@@ -56,15 +59,19 @@ export const handleNewMessage = async (
     )
 
     await addToNani(
-      createMessaeToSave(
-        author.user.username ?? '',
-        ctx.message.text,
+      createMessageToSave({
+        author: author.user.username ?? '',
+        message: ctx.message.text,
+      }
       ),
       "telegram"
     )
 
     let messageChain: ChatCompletionRequestMessage[] = [];
     let msgHistory = await getHistory(5);
+
+    console.log("msgHistory", msgHistory)
+   
     msgHistory.forEach((msg) => {
       messageChain.push({
         role: "user",
@@ -73,13 +80,19 @@ export const handleNewMessage = async (
       });
     });
 
+    console.log("messageChain", messageChain, messageChain[messageChain.length - 1]);
+
     const relevantHistoricalContext = await getHistoricalContext(
       {
-        query: `
-          ${msgHistory[-1].username}:${msgHistory[-1].message}
-        `
+        query: createMessageToSave({
+          author: author.user.username ?? '',
+          message: ctx.message.text,
+        }
+        )
       }
     );
+
+    
 
     const response = await getChatCompletion({
       messages: [...messageChain],
@@ -96,12 +109,13 @@ export const handleNewMessage = async (
 
     if (response.length > 0) {
       await addToNani(
-        createMessaeToSave(
-          response,
-          reply.from?.username ?? '',
+        createMessageToSave({
+          message: response,
+          author: reply.from?.username ?? '',
+        }
         ),
         "telegram"
-      )
+      ) 
     }
     updateHistory(
       reply.from?.username ?? '',

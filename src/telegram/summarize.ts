@@ -1,6 +1,6 @@
 import { getChatCompletion } from "@/llm/openai";
-import { ChatCompletionRequestMessageWithTimestamp } from "@/memory";
-import { unixTimestampToISO } from "@/utils";
+import { ChatCompletionRequestMessageWithTimestamp } from "@/telegram/types";
+import { createMessageToSave } from "./utils";
 
 export const summarizeHistoricalContext = async ({
   historicalContext,
@@ -9,15 +9,13 @@ export const summarizeHistoricalContext = async ({
   historicalContext: ChatCompletionRequestMessageWithTimestamp[];
   query: string;
 }) => {
-  console.log("summarizeHistoricalContext called with:", {
-    historicalContext,
-    query,
-  });
-
   const messages = historicalContext.map((message) => {
-    return `${message.content}`;
+    return createMessageToSave({
+      message: message.content,
+      author: message.name ?? message.role,
+    })
+
   }).join('\n\n');
-  console.log("messages:", messages)
 
   const prompt = `The following text contains information related to the question: "${query}". Your task is to read the text, extract the relevant information, and provide a concise and accurate summary that directly answers the question. Ignore any unrelated content. The summary should be no more than 300 words.
 
@@ -39,13 +37,8 @@ export const summarizeHistoricalContext = async ({
     model: "gpt-3.5-turbo",
     max_tokens: 500,
     callback: (message) => {
-      console.log('.')
-      console.log(message)
     }
   });
-  
-
-  console.log("summary:", summary, summary.length)
 
 
   return summary;

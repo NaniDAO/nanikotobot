@@ -77,7 +77,13 @@ export const getHistoricalContext = async ({
     query: string;
   }): Promise<string> => {
     try {
+    const { username, message } = extractUsernameAndContent(query);
+
     let context = ''
+    if (!removeOneWordContent(message)) {
+        return context
+    }
+
     const res = await searchCollection({
         query,
         collectionName: "nani",
@@ -107,10 +113,10 @@ export const getHistoricalContext = async ({
             role: match.username === "@nanikotobot" ? 'assistant' : 'user' as ChatCompletionRequestMessageRoleEnum,
             timestamp: match.timestamp,
         }))
-        console.log('topMatches', topMatches, topMatches.length)
+        console.log('topMatches', topMatches.length)
 
         context = await summarizeHistoricalContext({
-            historicalContext: topMatches,
+            historicalContext: topMatches.slice(0, 10),
             query,
         });
        
@@ -118,7 +124,7 @@ export const getHistoricalContext = async ({
 
     return context
     } catch (e) {
-        console.error("Error searching embeddings:", e);
+        console.error("Error getting Historical context:", e);
         throw e;
     }
 };
