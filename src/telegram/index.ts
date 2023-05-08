@@ -84,11 +84,8 @@ export const handleNewMessage = async (
 
     const relevantHistoricalContext = await getHistoricalContext(
       {
-        query: createMessageToSave({
-          author: author.user.username ?? '',
-          message: ctx.message.text,
-        }
-        )
+        history: [messageChain[messageChain.length - 3]],
+      
       }
     );
 

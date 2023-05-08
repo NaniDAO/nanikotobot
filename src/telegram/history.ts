@@ -1,7 +1,7 @@
 import { searchCollection } from "@/memory/utils";
 import { extractKeywords } from "./utils";
 import { summarizeHistoricalContext } from "./summarize";
-import { ChatCompletionRequestMessageRoleEnum } from "openai";
+import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum } from "openai";
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -72,17 +72,15 @@ const isRelevantContent = (keywords: string[], content: string): boolean => {
 };
 
 export const getHistoricalContext = async ({
-    query,
+    history,
   }: {
-    query: string;
+    history: ChatCompletionRequestMessage[];
   }): Promise<string> => {
     try {
-    const { username, message } = extractUsernameAndContent(query);
 
     let context = ''
-    if (!removeOneWordContent(message)) {
-        return context
-    }
+ 
+    const query = history.map((message) => message.content).join(' ')
 
     const res = await searchCollection({
         query,
@@ -95,18 +93,18 @@ export const getHistoricalContext = async ({
     } else {
         let matches = res.results;
         let keywords = extractKeywords(query);
-        console.log('main', matches.length)
+     
         matches = matches.map((match) => {
             const { username, message } = extractUsernameAndContent(match.content);
             return { ...match, username, content: message };
         });
         
         matches = matches.filter((match) => removeOneWordContent(match.content));
-        console.log('removed one word', matches.length, )
+
         matches = matches.filter((match) => isRelevantContent(keywords, match.content));
-        console.log('removed irrelevant', keywords, matches.length)
+       
         matches = sortMatches(matches, 0.5, 0.8);
-        console.log('sorted', matches, matches.length)
+      
         const topMatches = matches.map((match) => ({
             name: match.username,
             content: match.content,

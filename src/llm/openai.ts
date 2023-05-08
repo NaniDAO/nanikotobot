@@ -70,6 +70,8 @@ export const getChatCompletion = async ({
     let reply = "";
     const internalCallback = (message: string) => {
       reply += message;
+      console.clear()
+      console.log(reply)
       callback(message);
     };
 
@@ -116,3 +118,5 @@ export const getChatCompletion = async ({
     }
   }
 };
+
+
