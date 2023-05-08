@@ -41,8 +41,6 @@ export const handleNewMessage = async (
     }
 
     // check if the message is from group or admin 
-   
-    
     if (ctx.chat.id.toString() != groupId.toString() && ctx.chat.id.toString() != adminId.toString()) {
       ctx.reply("♡ JOIN NANI DAO ---> https://t.me/+NKbETPq0J9UyODk9");
       return;

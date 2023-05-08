@@ -57,8 +57,12 @@ export const updateHistory = (username: string, message: string, timestamp: numb
 };
 
 export const getHistory = (count?: number): Message[] => {
-    const currentHistory = getHistoryFromFile().map(message => ({ ...message }));
-    return count ? currentHistory.slice(-count) : currentHistory;
+    try {
+        const currentHistory = getHistoryFromFile().map(message => ({ ...message }));
+        return count ? currentHistory.slice(-count) : currentHistory;
+    } catch (err) {
+        throw new Error(`Error getting history: ${err}`);
+    }
 };
 
 const extractUsernameAndContent = (content: string): { username: string; message: string } => {

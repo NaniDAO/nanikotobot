@@ -5,13 +5,13 @@ import natural from 'natural';
 
 config();
 
-export const createTelegramBot = memoize(() => {
+export const createTelegramBot = () => {
     const token = process.env.TELEGRAM_TOKEN;
     
     if (!token) throw Error("TELEGRAM_TOKEN is not configured!");
   
     return new Bot(process.env.TELEGRAM_TOKEN!)
-});
+};
 
 export const textAdmin = async (ctx: Context, message: string) => {
   try {
