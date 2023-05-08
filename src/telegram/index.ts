@@ -28,15 +28,19 @@ export const handleNewMessage = async (
     const author = await ctx.getAuthor();
 
     if (!message) {
-      return;
+      return; 
     }
 
     let groupId = process.env.TELEGRAM_CHAT_ID;
     if (!groupId) {
       throw new Error("TELEGRAM_CHAT_ID is not configured!");
     }
+    let adminId = process.env.TELEGRAM_ADMIN_ID;
+    if (!adminId) {
+      throw new Error("TELEGRAM_ADMIN_ID is not configured!");
+    }
 
-    if (ctx.chat.id.toString() != groupId) {
+    if (ctx.chat.id.toString() != groupId || ctx.chat.id.toString() != adminId) {
       ctx.reply("♡ JOIN NANI DAO ---> https://t.me/+NKbETPq0J9UyODk9");
       return;
     }
