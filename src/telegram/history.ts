@@ -2,6 +2,9 @@ import { searchCollection } from "@/memory/utils";
 import { extractKeywords } from "./utils";
 import { summarizeHistoricalContext } from "./summarize";
 import { ChatCompletionRequestMessageRoleEnum } from "openai";
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 type Message = {
     username: string;
@@ -9,26 +12,45 @@ type Message = {
     timestamp: number;
 };
   
-const msgHistory: Message[] = []; // max last 10 messages
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const addMessageToHistory = (username: string, message: string, timestamp: number): void => {
-    const newMessage: Message = { username, message, timestamp };
-    msgHistory.push(newMessage);
+const historyFilePath = path.join(__dirname, '..', '..', 'store', 'history.json');
+
+const getHistoryFromFile = (): Message[] => {
+    if (!fs.existsSync(historyFilePath)) {
+        fs.writeFileSync(historyFilePath, JSON.stringify([]));
+    }
+    const historyData = fs.readFileSync(historyFilePath, 'utf-8');
+    return JSON.parse(historyData);
 };
 
-const removeOldestMessage = (): void => {
-if (history.length > 10) {
-    msgHistory.shift();
-}
+const updateHistoryFile = (history: Message[]): void => {
+    fs.writeFileSync(historyFilePath, JSON.stringify(history));
+};
+
+const addMessageToHistory = (username: string, message: string, timestamp: number): Message[] => {
+    const history = getHistoryFromFile();
+    const newMessage: Message = { username, message, timestamp };
+    history.push(newMessage);
+    return history;
+};
+
+const removeOldestMessage = (history: Message[]): Message[] => {
+    if (history.length > 10) {
+        history.shift();
+    }
+    return history;
 };
 
 export const updateHistory = (username: string, message: string, timestamp: number): void => {
-    addMessageToHistory(username, message, timestamp);
-    removeOldestMessage();
+    const updatedHistory = addMessageToHistory(username, message, timestamp);
+    const historyWithOldestRemoved = removeOldestMessage(updatedHistory);
+    updateHistoryFile(historyWithOldestRemoved);
 };
 
 export const getHistory = (count?: number): Message[] => {
-    const currentHistory = msgHistory.map(message => ({ ...message }));
+    const currentHistory = getHistoryFromFile().map(message => ({ ...message }));
     return count ? currentHistory.slice(-count) : currentHistory;
 };
 

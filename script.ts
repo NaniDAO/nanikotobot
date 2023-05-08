@@ -1,18 +1,10 @@
-import { migrateFromPineconeToMilvus } from "@/memory";
-import { searchCollection } from "@/memory/utils";
-import { getHistoricalContext } from "@/telegram/history";
-import { extractKeywords } from "@/telegram/utils";
+import { getHistoricalContext, getHistory, updateHistory } from "@/telegram/history";
+
 import { config } from 'dotenv'
 
 config()
 
 const main = async () => {
-  // const collection = await milvusClient.hasCollection({
-  //   collection_name: collectionName, m,
-  // await migrateFromPineconeToMilvus()
- getHistoricalContext({
-    query: 'what is business source license?'
-  })
 }
 
 main()
