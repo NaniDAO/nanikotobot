@@ -17,6 +17,7 @@ export const handleNewMessage = async (
     if (!ctx.message) {
       throw new Error("No Message!");
     }
+   
 
     if (!ctx.chat) {
       throw new Error("No Chat!");
@@ -27,7 +28,8 @@ export const handleNewMessage = async (
     const message = ctx.message.text;
     const author = await ctx.getAuthor();
 
-    if (!message) {
+    if (!message || message.startsWith('.')) {
+      console.log("Nani will not reply to this message.")
       return; 
     }
 

@@ -1,27 +1,32 @@
 import { getChatCompletion } from "@/llm/openai";
-import { ChatCompletionRequestMessageWithTimestamp } from "@/telegram/types";
-import { createMessageToSave } from "./utils";
+
+export const createOverlappingChunks = (text: string, chunkSize: number, overlap: number) => {
+  const chunks = [];
+  let index = 0;
+
+  while (index < text.length) {
+      const chunk = text.slice(index, index + chunkSize);
+      chunks.push(chunk);
+      index += chunkSize - overlap;
+  }
+
+  return chunks;
+};
 
 export const summarizeHistoricalContext = async ({
   historicalContext,
   query,
 }: {
-  historicalContext: ChatCompletionRequestMessageWithTimestamp[];
+  historicalContext: string;
   query: string;
 }) => {
-  const messages = historicalContext.map((message) => {
-    return createMessageToSave({
-      message: message.content,
-      author: message.name ?? message.role,
-    })
-
-  }).join('\n\n');
+ 
 
   const prompt = `The following text contains information related to the question: "${query}". Your task is to read the text, extract the relevant information, and provide a concise and accurate summary that directly answers the question. Ignore any unrelated content. The summary should be no more than 300 words.
 
   Text to Analyze:
   \`\`\`
-  ${messages}
+  ${historicalContext}
   \`\`\`
 
   Please provide a summary that answers the question:`;

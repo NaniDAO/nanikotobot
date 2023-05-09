@@ -1,22 +1,40 @@
 import { getPageSummary } from "@/commands/web";
-import { addToNani, searchCollection } from "@/memory/utils";
-import { getHistoricalContext, getHistory, updateHistory } from "@/telegram/history";
+import { addToNani } from "@/memory/utils";
 
 import { config } from 'dotenv'
 
 config()
 
+const sleep = async (ms: number) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 const main = async () => {
-    const summary = await getPageSummary(
-        5000,
-        'https://goldenlight.mirror.xyz/o5CpltqerVga2ULwztI_jLmlpBe57K-ej2JWkVMJB14'
-    )
-    summary.chunks.forEach(async (chunk) => {
-        await addToNani(
-            chunk,
-            'https://goldenlight.mirror.xyz/o5CpltqerVga2ULwztI_jLmlpBe57K-ej2JWkVMJB14'
+    try {
+    let urls = ["https://ape.mirror.xyz/Uzqcx5DgW_csqLIcrDAtgAWvE1c43kMhkDHORTEq_Pc"]
+
+    for (let i = 0; i < urls.length; i++) {
+        const url = urls[i]
+        const summary = await getPageSummary(
+            5000,
+            url
         )
-    })
+            
+        // create overlapping chunks instead 
+        for (const chunk of summary.chunks) {
+            await addToNani(
+                chunk,
+                url,
+            )
+        }
+    
+        console.log('Summarized:', url, 'successfully')
+        await sleep(5000).then(() => console.log('Sleeping...')).finally(() => console.log('Done sleeping'))
+    }
+
+   
+    } catch (e) {
+        console.log(e)
+    }   
 }
 
 main()

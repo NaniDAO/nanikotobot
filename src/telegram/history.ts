@@ -1,10 +1,12 @@
 import { searchCollection } from "@/memory/utils";
-import { extractKeywords } from "./utils";
+import { createMessageToSave, extractKeywords } from "./utils";
 import { summarizeHistoricalContext } from "./summarize";
 import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum } from "openai";
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { decode, encode } from "gpt-3-encoder";
+import { chunkTokens, tokenize } from "@/memory/generateEmbeddings";
 
 type Message = {
     username: string;
@@ -129,12 +131,21 @@ export const getHistoricalContext = async ({
             timestamp: match.timestamp,
         }))
         console.log('topMatches', topMatches.length)
-
-        context = await summarizeHistoricalContext({
-            historicalContext: topMatches.slice(0, 10),
-            query,
-        });
-       
+        let messages = tokenize(topMatches.slice(0, 10).map((message) => {
+            return createMessageToSave({
+              message: message.content,
+              author: message.name ?? message.role,
+            })
+        }).join('\n\n'));
+        let historicalContext =  chunkTokens(messages, 3000)
+     
+        for (let i=0; i < historicalContext.length; i++) {
+            let current = historicalContext[i]
+            context += await summarizeHistoricalContext({
+                historicalContext: decode(current),
+                query,
+            });
+        }
     }
 
     return context

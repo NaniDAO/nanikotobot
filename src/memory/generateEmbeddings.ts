@@ -11,7 +11,7 @@ export const normalize = (vector: number[]): number[] => {
   return vector.map(val => val / norm);
 }
 
-const chunkTokens = (tokens: number[], chunkSize = 8191): number[][] => {
+export const chunkTokens = (tokens: number[], chunkSize = 8191): number[][] => {
     return tokens.reduce((chunks: number[][], token: number) => {
       const lastChunk = chunks[chunks.length - 1];
   
@@ -41,6 +41,10 @@ const createEmbedding = async (tokens: number[]): Promise<number[]> => {
     }
 };
 
+export const tokenize = (text: string): number[] => {
+  return encode(prepareDocument(text));
+};
+
 export const generateEmbeddings = async (
     document: string
   ): Promise<
@@ -50,7 +54,7 @@ export const generateEmbeddings = async (
     }[]
   > => {
     try {
-      const tokens = encode(prepareDocument(document));
+      const tokens = tokenize(document)
       const tokenChunks = chunkTokens(tokens);
   
       const embeddings = await Promise.all(tokenChunks.map(createEmbedding));
