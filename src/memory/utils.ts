@@ -25,7 +25,7 @@ export const addToNani = async (content: string, source: string) => {
         const res = await client.insert({
             collection_name: "nani",
             fields_data,
-            timeout: 30000,
+            timeout: 60000,
         })
         return res
     } catch (e) {

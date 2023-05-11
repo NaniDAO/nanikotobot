@@ -7,117 +7,79 @@ import { Context } from "grammy";
 import { interpolateTemplate } from "@/llm/utils";
 import { updateHistory, getHistory, getHistoricalContext } from "./history";
 import { addToNani } from "@/memory/utils";
+import { INVALID_GROUP } from "@/constants";
 
 config();
+
+const validateMessage = (ctx: Context) => {
+  if (!ctx.message || !ctx.chat) {
+    throw new Error("No Message or Chat!");
+  }
+
+  const message = ctx.message.text;
+  if (!message || message.startsWith('.')) {
+    console.log("Nani will not reply to this message.")
+    return false;
+  }
+
+  return true;
+};
+
+const validateChat = (ctx: Context) => {
+  let groupId = process.env.TELEGRAM_CHAT_ID;
+  if (!groupId) {
+    throw new Error("TELEGRAM_CHAT_ID is not configured!");
+  }
+  let adminId = process.env.ADMIN_CHAT_ID;
+  if (!adminId) {
+    throw new Error("ADMIN_CHAT_ID is not configured!");
+  }
+
+  if (ctx?.chat?.id.toString() != groupId.toString() && ctx?.chat?.id.toString() != adminId.toString()) {
+    ctx.reply(INVALID_GROUP);
+    return false;
+  }
+
+  return true;
+};
 
 export const handleNewMessage = async (
   ctx: Context
 ) => {
   try {
-    if (!ctx.message) {
-      throw new Error("No Message!");
-    }
-   
-
-    if (!ctx.chat) {
-      throw new Error("No Chat!");
-    }
-
-    console.log("Chat Room ->", ctx.chat.id);
-
-    const message = ctx.message.text;
-    const author = await ctx.getAuthor();
-
-    if (!message || message.startsWith('.')) {
-      console.log("Nani will not reply to this message.")
-      return; 
-    }
-
-    let groupId = process.env.TELEGRAM_CHAT_ID;
-    if (!groupId) {
-      throw new Error("TELEGRAM_CHAT_ID is not configured!");
-    }
-    let adminId = process.env.ADMIN_CHAT_ID;
-    if (!adminId) {
-      throw new Error("ADMIN_CHAT_ID is not configured!");
-    }
-
-    // check if the message is from group or admin 
-    if (ctx.chat.id.toString() != groupId.toString() && ctx.chat.id.toString() != adminId.toString()) {
-      ctx.reply("♡ JOIN NANI DAO ---> https://t.me/+NKbETPq0J9UyODk9");
+    if (!validateMessage(ctx) || !validateChat(ctx)) {
       return;
     }
-
-    if (!ctx.message.text) {
-      return 
-    }
-
-    updateHistory(
-      author.user.username ?? '',
-      ctx.message.text,
-      ctx.message.date
-    )
-
-    await addToNani(
-      createMessageToSave({
-        author: author.user.username ?? '',
-        message: ctx.message.text,
-      }
-      ),
-      "telegram"
-    )
-
+  
+    const message = ctx?.message?.text as string;
+    const date = await ctx?.message?.date as number;
+    const author = await ctx.getAuthor();
+  
+    updateHistory(author.user.username ?? '', message, date);
+    await addToNani(createMessageToSave({ author: author.user.username ?? 'bot', message }), "telegram");
+  
     let messageChain: ChatCompletionRequestMessage[] = [];
     let msgHistory = await getHistory(5);
-
-    console.log("msgHistory", msgHistory)
-   
+  
     msgHistory.forEach((msg) => {
-      messageChain.push({
-        role: "user",
-        content: msg.message,
-        name: msg.username,
-      });
+      messageChain.push({ role: "user", content: msg.message, name: msg.username });
     });
-
-    console.log("messageChain",  messageChain.slice(-3));
-
-    const relevantHistoricalContext = await getHistoricalContext(
-      {
-        history: messageChain.slice(-3),
-      }
-    );
-
-    
-
+  
+    const relevantHistoricalContext = await getHistoricalContext({ history: messageChain.slice(-3) });
+  
     const response = await getChatCompletion({
       messages: [...messageChain],
-      system_prompt: interpolateTemplate(TELEGRAM_SYSTEM_PROMPT, {
-        context: relevantHistoricalContext,
-      }),
+      system_prompt: interpolateTemplate(TELEGRAM_SYSTEM_PROMPT, { context: relevantHistoricalContext }),
       model: "gpt-4",
       callback: (message) => {},
     });
-
-    const reply = await ctx.api.sendMessage(ctx.chat.id, response, {
-      reply_to_message_id: ctx.message.message_id,
-    });
-
+  
+    const reply = await ctx.api.sendMessage(ctx?.chat?.id ?? '', response, { reply_to_message_id: ctx?.message?.message_id });
+  
     if (response.length > 0) {
-      await addToNani(
-        createMessageToSave({
-          message: response,
-          author: reply.from?.username ?? '',
-        }
-        ),
-        "telegram"
-      ) 
+      await addToNani(createMessageToSave({ message: response, author: '@nanikotobot' }), "telegram");
     }
-    updateHistory(
-      reply.from?.username ?? '',
-      response,
-      reply.date
-    )
+    updateHistory(reply.from?.username ?? '', response, reply.date);
   } catch (e) {
     console.error(e);
     await textAdmin(

@@ -86,7 +86,7 @@ export const getChatCompletion = async ({
           ...messages,
         ],
         stream: true,
-        stop: "/STOP/",
+        stop: ["/STOP/", '###'],
         max_tokens,
         temperature: 1,
       },

@@ -10,7 +10,7 @@ const sleep = async (ms: number) => {
 }
 const main = async () => {
     try {
-    let urls = ["https://ape.mirror.xyz/Uzqcx5DgW_csqLIcrDAtgAWvE1c43kMhkDHORTEq_Pc"]
+    let urls = ["https://forum.makerdao.com/t/the-5-phases-of-endgame/20830"]
 
     for (let i = 0; i < urls.length; i++) {
         const url = urls[i]
