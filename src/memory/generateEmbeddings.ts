@@ -32,8 +32,8 @@ const createEmbedding = async (tokens: number[]): Promise<number[]> => {
         model: "text-embedding-ada-002",
         input: tokens,
       });
-      // const embedding = normalize(response.data.data[0].embedding);
-      const embedding = response.data.data[0].embedding; // removing normalization for now
+      const embedding = normalize(response.data.data[0].embedding);
+      /// const embedding = response.data.data[0].embedding; 
   
       return embedding;
     } catch (error) {
