@@ -27,6 +27,7 @@ export const chunkTokens = (tokens: number[], chunkSize = 8191): number[][] => {
 
 const createEmbedding = async (tokens: number[]): Promise<number[]> => {
     try {
+     
       const llm  = createLlmClient();
       const response = await llm.createEmbedding({
         model: "text-embedding-ada-002",

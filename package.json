@@ -21,8 +21,6 @@
   "author": "Shivanshi Tyagi",
   "license": "MIT",
   "dependencies": {
-    "@pinecone-database/pinecone": "^0.0.14",
-    "@types/uuid": "^9.0.1",
     "@zilliz/milvus2-sdk-node": "^2.2.9",
     "axios": "0.26.1",
     "dotenv": "^16.0.3",

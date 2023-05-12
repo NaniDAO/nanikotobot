@@ -16,8 +16,8 @@ nanikotobot is a minimal Telegram bot powered by OpenAI. It has the ability to r
 To run this project, you need to have the following:
 
 - Node.js (v14 or higher)
-- A Pinecone API key
-- A Telegram Bot API token
+- A Telegram Bot API Token
+- OpenAI Key
 
 ### Installation
 
