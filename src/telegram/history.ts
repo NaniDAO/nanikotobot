@@ -36,6 +36,11 @@ const getHistoryFromFile = (): Message[] => {
 
 const updateHistoryFile = (history: Message[]): void => {
     try {
+        if (!fs.existsSync(historyFilePath)) {
+            fs.mkdirSync(path.dirname(historyFilePath), { recursive: true });
+            fs.writeFileSync(historyFilePath, '');
+        }
+
         fs.writeFileSync(historyFilePath, JSON.stringify(history));
     } catch (err) {
         console.error(err);
