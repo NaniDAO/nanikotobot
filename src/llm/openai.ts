@@ -63,7 +63,7 @@ export const getChatCompletion = async ({
   messages: ChatCompletionRequestMessage[];
   system_prompt: string;
   model?: string;
-  callback: (message: string) => void;
+  callback?: (message: string) => void;
   max_tokens?: number;
 }): Promise<string> => {
   try {
@@ -72,7 +72,7 @@ export const getChatCompletion = async ({
       reply += message;
       console.clear()
       console.log(reply)
-      callback(message);
+      callback?.(message);
     };
 
     const response = await openai.createChatCompletion(
