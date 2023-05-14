@@ -1,6 +1,5 @@
 import { Bot, Context } from "grammy";
 import { config } from "dotenv";
-import { memoize } from "lodash-es";
 import natural from 'natural';
 
 config();

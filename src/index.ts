@@ -1,14 +1,7 @@
-import { handleNewMessage } from "./telegram";
-import { createTelegramBot } from "./telegram/utils";
+import { initDiscord } from '@/discord/'
+import { initTelegram } from '@/telegram/'
 
-const bot = createTelegramBot();
+initTelegram();
 
-process.once("SIGINT", () => bot.stop());
-process.once("SIGTERM", () => bot.stop());
-
-bot.start();
-
-bot.on("message", async (ctx) => handleNewMessage(ctx));
-
-bot.catch(console.error);
+initDiscord();
 

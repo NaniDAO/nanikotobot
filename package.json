@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "start-discord": "tsx src/discord/index.ts",
     "start": "tsx src/index.ts",
     "dev": "tsx src/index.ts --watch",
     "build": "tsx src/index.ts --build",
@@ -23,6 +24,7 @@
   "dependencies": {
     "@zilliz/milvus2-sdk-node": "^2.2.9",
     "axios": "0.26.1",
+    "discord.js": "^14.11.0",
     "dotenv": "^16.0.3",
     "googleapis": "^118.0.0",
     "gpt-3-encoder": "^1.1.4",

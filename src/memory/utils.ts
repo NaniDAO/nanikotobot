@@ -30,6 +30,7 @@ export const addToNani = async (content: string, source: string) => {
         return res
     } catch (e) {
         console.error("Error inserting embeddings:", e);
+        // if error is deadline exceeded, retry with a longer timeout
         throw e;
     }
 }

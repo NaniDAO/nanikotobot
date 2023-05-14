@@ -2,12 +2,13 @@ import { config } from "dotenv";
 import { getChatCompletion } from "../llm/openai";
 import { TELEGRAM_SYSTEM_PROMPT } from "./prompt";
 import { ChatCompletionRequestMessage } from "openai";
-import { createMessageToSave, textAdmin } from "@/telegram/utils";
+import { createMessageToSave, createTelegramBot, textAdmin } from "@/telegram/utils";
 import { Context } from "grammy";
 import { interpolateTemplate } from "@/llm/utils";
 import { updateHistory, getHistory, getHistoricalContext } from "./history";
 import { addToNani } from "@/memory/utils";
 import { INVALID_GROUP } from "@/constants";
+import { getReply } from "@/commands/reply";
 
 config();
 
@@ -64,15 +65,11 @@ export const handleNewMessage = async (
     msgHistory.forEach((msg) => {
       messageChain.push({ role: "user", content: msg.message, name: msg.username });
     });
-  
-    const relevantHistoricalContext = await getHistoricalContext({ history: messageChain.slice(-3) });
-  
-    const response = await getChatCompletion({
+
+    const response = await getReply({
+      platform: 'telegram',
       messages: [...messageChain],
-      system_prompt: interpolateTemplate(TELEGRAM_SYSTEM_PROMPT, { context: relevantHistoricalContext }),
-      model: "gpt-4",
-      callback: (message) => {},
-    });
+    })
   
     const reply = await ctx.api.sendMessage(ctx?.chat?.id ?? '', response, { reply_to_message_id: ctx?.message?.message_id });
   
@@ -89,5 +86,19 @@ export const handleNewMessage = async (
       }`
     );
   }
+  
 };
+
+export function initTelegram() {
+  const bot = createTelegramBot();
+
+  process.once("SIGINT", () => bot.stop());
+  process.once("SIGTERM", () => bot.stop());
+  
+  bot.start();
+  
+  bot.on("message", async (ctx) => handleNewMessage(ctx));
+  
+  bot.catch(console.error);
+}
 
