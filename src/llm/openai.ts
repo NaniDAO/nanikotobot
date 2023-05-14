@@ -2,8 +2,14 @@ import { config } from "dotenv";
 import { memoize } from "lodash-es";
 import { OpenAIApi, Configuration, ChatCompletionRequestMessage } from "openai";
 import { AxiosError } from "axios";
+import { countTokens } from "@/utils";
+import { getHistoricalContext } from "@/telegram/history";
+import { summarizeHistoricalContext } from "@/telegram/summarize";
+import { createMessageToSave } from "@/telegram/utils";
 
 config();
+
+export type Models = "gpt-3.5-turbo" | "gpt-4";
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -57,23 +63,44 @@ export const getChatCompletion = async ({
   messages,
   system_prompt,
   model = "gpt-4",
+  stop = ["/STOP/", '###'],
   max_tokens,
   callback,
 }: {
   messages: ChatCompletionRequestMessage[];
   system_prompt: string;
-  model?: string;
-  callback: (message: string) => void;
+  model?: Models;
+  stop?: string[];
+  callback?: (message: string) => void;
   max_tokens?: number;
 }): Promise<string> => {
   try {
     let reply = "";
     const internalCallback = (message: string) => {
       reply += message;
-      console.clear()
-      console.log(reply)
-      callback(message);
+      callback?.(message);
     };
+
+    const tokenCount = countTokens(messages.map(msg => msg.content).join('\n')) + countTokens(system_prompt) + 1000;
+    console.info(`Token count: ${tokenCount}`)
+    
+    
+    if (tokenCount > contextWindowSize[model]) {
+      // summarize the messages to a single 100 token message
+      const summary = await summarizeHistoricalContext({
+        historicalContext: `${messages.map(msg => createMessageToSave({
+          author: msg.name ?? msg.role,
+          message: msg.content,
+        })).join('\n')}`,
+      })
+
+      messages = [
+        {
+          role: "user",
+          content: summary,
+        }
+      ]
+    }
 
     const response = await openai.createChatCompletion(
       {
@@ -86,7 +113,7 @@ export const getChatCompletion = async ({
           ...messages,
         ],
         stream: true,
-        stop: ["/STOP/", '###'],
+        stop,
         max_tokens,
         temperature: 1,
       },

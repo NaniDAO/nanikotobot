@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 import { getChatCompletion } from "../llm/openai";
-import { TELEGRAM_SYSTEM_PROMPT } from "./prompt";
+import { NANI_STOP, TELEGRAM_SYSTEM_PROMPT } from "./prompt";
 import { ChatCompletionRequestMessage } from "openai";
 import { createMessageToSave, textAdmin } from "@/telegram/utils";
 import { Context } from "grammy";
@@ -8,6 +8,7 @@ import { interpolateTemplate } from "@/llm/utils";
 import { updateHistory, getHistory, getHistoricalContext } from "./history";
 import { addToNani } from "@/memory/utils";
 import { INVALID_GROUP } from "@/constants";
+import { getNaniCommandInstructions, getNaniCommands } from "@/commands/utils";
 
 config();
 
@@ -43,43 +44,60 @@ const validateChat = (ctx: Context) => {
   return true;
 };
 
-export const handleNewMessage = async (
-  ctx: Context
-) => {
+export const handleNewMessage = async (ctx: Context) => {
   try {
     if (!validateMessage(ctx) || !validateChat(ctx)) {
       return;
     }
-  
+
     const message = ctx?.message?.text as string;
     const date = await ctx?.message?.date as number;
     const author = await ctx.getAuthor();
-  
+
     updateHistory(author.user.username ?? '', message, date);
     await addToNani(createMessageToSave({ author: author.user.username ?? 'bot', message }), "telegram");
-  
+
     let messageChain: ChatCompletionRequestMessage[] = [];
     let msgHistory = await getHistory(5);
-  
+
     msgHistory.forEach((msg) => {
       messageChain.push({ role: "user", content: msg.message, name: msg.username });
     });
-  
-    const relevantHistoricalContext = await getHistoricalContext({ history: messageChain.slice(-3) });
-  
-    const response = await getChatCompletion({
-      messages: [...messageChain],
-      system_prompt: interpolateTemplate(TELEGRAM_SYSTEM_PROMPT, { context: relevantHistoricalContext }),
-      model: "gpt-4",
-      callback: (message) => {},
-    });
-  
-    const reply = await ctx.api.sendMessage(ctx?.chat?.id ?? '', response, { reply_to_message_id: ctx?.message?.message_id });
-  
-    if (response.length > 0) {
-      await addToNani(createMessageToSave({ message: response, author: '@nanikotobot' }), "telegram");
-    }
-    updateHistory(reply.from?.username ?? '', response, reply.date);
+
+
+    const processChatCompletion = async (messageChain: ChatCompletionRequestMessage[]) => {
+      console.log('processChatCompletion called')
+      const response = await getChatCompletion({
+        messages: [...messageChain],
+        system_prompt: interpolateTemplate(TELEGRAM_SYSTEM_PROMPT, { commands: getNaniCommandInstructions() }),
+        model: "gpt-4",
+        stop: [NANI_STOP, '\n'],
+        callback: (message) => {},
+      });
+      console.log(`response: ${response}`);
+
+      const command = getNaniCommands().find(cmd => response.startsWith(cmd.name));
+      console.log(`command: ${command}`);
+
+      if (command) {
+        const arg = response.slice(command.name.length).trim();
+        const result = await command.action(arg);
+        console.info(`command ${command.name} with arg ${arg} produced result ${result}`);
+
+        messageChain.push({ role: "user", content: `${response}\n${result}${NANI_STOP}`, name: '@nanikotobot' });
+        await processChatCompletion(messageChain);
+      } else {
+
+        let reply = response
+        if (reply.startsWith('/reply')) {
+          reply = reply.slice('/reply'.length).trim();
+        }
+        await replyNow(reply, ctx);
+          return;
+      }
+    };
+
+    await processChatCompletion(messageChain);
   } catch (e) {
     console.error(e);
     await textAdmin(
@@ -90,4 +108,15 @@ export const handleNewMessage = async (
     );
   }
 };
+
+
+export const replyNow = async (reply: string, ctx: Context) => {
+    if (reply.length > 0) {
+      const res = await ctx.api.sendMessage(ctx?.chat?.id ?? '', reply, { reply_to_message_id: ctx?.message?.message_id });
+
+      await addToNani(createMessageToSave({ message: reply, author: '@nanikotobot' }), "telegram");
+
+      updateHistory('@nanikotobot', reply, res.date);
+    }
+}
 

@@ -8,13 +8,33 @@ import { contextWindowSize, getChatCompletion } from "@/llm/openai";
 
 config()
 
-export const googleIt = async (query: string) => {
+export const googleIt = async (query: string): Promise<string> => {
     const { data } = await google.customsearch("v1").cse.list({
       q: query,
       cx: process.env.GOOGLE_SEARCH_ENGINE_ID,
       key: process.env.GOOGLE_API_KEY,
     });
-    return data.items;
+
+
+    const results = data.items;
+
+    if (!results) {
+      return "No results found.";
+    }
+
+    
+    let response = "";
+    for (let i=0; i<results.length; i++) {
+      const result = results[i];
+
+      const title = result.title;
+      const link = result.link;
+      const snippet = result.snippet;
+      
+      response += `*${title}*\n${snippet}\nURL: ${link}\n\n`;
+    }
+
+    return response;
 }
 
 export const getPageSummary = async (

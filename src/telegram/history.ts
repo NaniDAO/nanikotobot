@@ -94,18 +94,27 @@ const isRelevantContent = (keywords: string[], content: string): boolean => {
     return keywords.some(keyword => contentWords.includes(keyword));
 };
 
+
 export const getHistoricalContext = async ({
     history,
   }: {
     history: ChatCompletionRequestMessage[];
   }): Promise<string> => {
     try {
-
-    let context = ''
-    console.log("history", history)
- 
+    console.info(`${history.map((message) => `${message.name}:${message.content}`).join(' ')}`)
+   
     const query = history.map((message) => message.content).join(' ')
 
+    const context = queryNaniMemory(query);
+    return context;
+    } catch (e) {
+        console.error("Error getting Historical context:", e);
+        throw e;
+    }
+};
+
+export const queryNaniMemory = async (query: string): Promise<string> => {
+    let context = ''
     const res = await searchCollection({
         query,
         collectionName: "nani",
@@ -135,7 +144,7 @@ export const getHistoricalContext = async ({
             role: match.username === "@nanikotobot" ? 'assistant' : 'user' as ChatCompletionRequestMessageRoleEnum,
             timestamp: match.timestamp,
         }))
-        console.log('topMatches', topMatches.length)
+        
         let messages = tokenize(topMatches.slice(0, 10).map((message) => {
             return createMessageToSave({
               message: message.content,
@@ -154,11 +163,7 @@ export const getHistoricalContext = async ({
     }
 
     return context
-    } catch (e) {
-        console.error("Error getting Historical context:", e);
-        throw e;
-    }
-};
+}
 
 
 const normalize = (value: number, min: number, max: number): number => {
