@@ -1,10 +1,7 @@
 import { config } from "dotenv";
-import { getChatCompletion } from "../llm/openai";
-import { TELEGRAM_SYSTEM_PROMPT } from "./prompt";
 import { ChatCompletionRequestMessage } from "openai";
 import { createMessageToSave, createTelegramBot, textAdmin } from "@/telegram/utils";
 import { Context } from "grammy";
-import { interpolateTemplate } from "@/llm/utils";
 import { updateHistory, getHistory, getHistoricalContext } from "./history";
 import { addToNani } from "@/memory/utils";
 import { INVALID_GROUP } from "@/constants";
