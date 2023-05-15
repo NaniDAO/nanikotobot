@@ -1,4 +1,4 @@
-import { MilvusClient, DataType } from "@zilliz/milvus2-sdk-node";
+import { MilvusClient, DataType, MetricType } from "@zilliz/milvus2-sdk-node";
 import { config } from "./constants.ts";
 import { memoize } from "lodash-es";
 import { generateEmbeddings } from "./generateEmbeddings.ts";
@@ -6,12 +6,12 @@ import { getTimestampAt } from "@/utils.ts";
 
 export const createMilvusClient = memoize(() => {
     if (!config.uri) throw new Error("MILVUS_URI is not set")
-    return new MilvusClient(config.uri, config.secure, config.user, config.password);
+    return new MilvusClient({ address: config.uri, ssl: config.secure, username: config.user, password: config.password, maxRetries: 5, retryDelay: 30, debug: true });
 });
 
 export const addToNani = async (content: string, source: string) => {
+    const client = createMilvusClient();
     try {
-        const client = createMilvusClient();
         const embedding = await generateEmbeddings(content)
         const fields_data = embedding.map((e) => {
             return {
@@ -22,6 +22,10 @@ export const addToNani = async (content: string, source: string) => {
             }
         })
 
+        client.loadCollectionSync({
+            collection_name: "nani"
+        })
+
         const res = await client.insert({
             collection_name: "nani",
             fields_data,
@@ -30,8 +34,9 @@ export const addToNani = async (content: string, source: string) => {
         return res
     } catch (e) {
         console.error("Error inserting embeddings:", e);
-        // if error is deadline exceeded, retry with a longer timeout
         throw e;
+    } finally {
+        client.closeConnection()
     }
 }
 
@@ -62,6 +67,7 @@ export const searchCollection = async ({
             vector_type: DataType.FloatVector,
             vectors: [embedding],
             topk: topK,
+            metric_type: MetricType.IP,
         });
         return res;
     } catch (e) {
