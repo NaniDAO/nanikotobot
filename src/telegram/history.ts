@@ -5,7 +5,7 @@ import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum } fr
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { decode, encode } from "gpt-3-encoder";
+import { decode } from "gpt-3-encoder";
 import { chunkTokens, tokenize } from "@/memory/generateEmbeddings";
 
 type Message = {
@@ -135,7 +135,8 @@ export const getHistoricalContext = async ({
             role: match.username === "@nanikotobot" ? 'assistant' : 'user' as ChatCompletionRequestMessageRoleEnum,
             timestamp: match.timestamp,
         }))
-        console.log('topMatches', topMatches.length)
+        
+        console.info('topMatches', topMatches.length)
         let messages = tokenize(topMatches.slice(0, 10).map((message) => {
             return createMessageToSave({
               message: message.content,
