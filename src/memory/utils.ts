@@ -11,7 +11,9 @@ export const createMilvusClient = memoize(() => {
 
 export const addToNani = async (content: string, source: string) => {
     const client = createMilvusClient();
+   
     try {
+        client.connect()
         const embedding = await generateEmbeddings(content)
         const fields_data = embedding.map((e) => {
             return {
@@ -49,8 +51,9 @@ export const searchCollection = async ({
     collectionName: string;
     topK?: number;
 }) => {
+    const client = createMilvusClient();
     try {
-        const client = createMilvusClient();
+        client.connect()
         const embedding = await generateEmbeddings(query).then((embeddings) => {
             let final: number[] = []
             embeddings.forEach((element) => {
@@ -60,7 +63,10 @@ export const searchCollection = async ({
             });
             return final
         });
-        
+
+        client.loadCollectionSync({
+            collection_name: collectionName
+        })
 
         const res = await client.search({
             collection_name: collectionName,
@@ -73,6 +79,8 @@ export const searchCollection = async ({
     } catch (e) {
         console.error("Error searching embeddings:", e);
         throw e;
+    } finally {
+        client.closeConnection()
     }
 }
 
