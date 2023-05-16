@@ -146,7 +146,7 @@ export const getNaniCompletion = async ({
     stop: ["###"],
   })
 
-  const reply = response?.data?.choices?.[0]?.text?.replace(/@\w+/g, '').trim();
+  const reply = response?.data?.choices?.[0]?.text?.replace(/@\w+/g, '').replace('Restatement:', '').replace('###', '').trim()
 
   return reply
 }
