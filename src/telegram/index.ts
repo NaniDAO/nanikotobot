@@ -65,7 +65,7 @@ export const handleNewMessage = async (ctx: Context) => {
     );
 
     let messageChain: ChatCompletionRequestMessage[] = [];
-    let msgHistory = await getHistory(5);
+    let msgHistory = await getHistory(3);
 
     msgHistory.forEach((msg) => {
       messageChain.push({
@@ -90,6 +90,7 @@ export const handleNewMessage = async (ctx: Context) => {
         "telegram"
       );
     }
+    
     updateHistory(reply.from?.username ?? "", response, reply.date);
   } catch (e) {
     console.error(e);

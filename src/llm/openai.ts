@@ -131,7 +131,7 @@ export const getNaniCompletion = async ({
 
   // check tokens length
   const tokenCount = countTokens(content, 'finetune') + countTokens("Statement: \nRestatement:###", 'finetune')
-  const max_tokens = 4000 - tokenCount
+  const max_tokens = 2000 - tokenCount
   if (max_tokens < 0) return undefined
   
   const response = await llm.createCompletion({
