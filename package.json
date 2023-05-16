@@ -22,6 +22,7 @@
   "author": "Shivanshi Tyagi",
   "license": "MIT",
   "dependencies": {
+    "@dqbd/tiktoken": "^1.0.7",
     "@zilliz/milvus2-sdk-node": "^2.2.9",
     "axios": "0.26.1",
     "discord.js": "^14.11.0",

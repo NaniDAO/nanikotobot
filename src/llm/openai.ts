@@ -2,6 +2,7 @@ import { config } from "dotenv";
 import { memoize } from "lodash-es";
 import { OpenAIApi, Configuration, ChatCompletionRequestMessage } from "openai";
 import { AxiosError } from "axios";
+import { countTokens } from "@/utils";
 
 config();
 
@@ -12,19 +13,19 @@ const configuration = new Configuration({
 export const openai = new OpenAIApi(configuration);
 
 export const contextWindowSize = {
-  'gpt-3.5-turbo': 4000,
-  'gpt-4': 4000,
+  "gpt-3.5-turbo": 4000,
+  "gpt-4": 4000,
 };
 
 export const createLlmClient = memoize(() => {
-  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not set")
+  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not set");
 
   const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
   });
 
   return new OpenAIApi(configuration);
-})
+});
 
 const parseChunk = (chunk: Buffer): string[] =>
   chunk
@@ -70,8 +71,8 @@ export const getChatCompletion = async ({
     let reply = "";
     const internalCallback = (message: string) => {
       reply += message;
-      console.clear()
-      console.log(reply)
+      console.clear();
+      console.log(reply);
       callback?.(message);
     };
 
@@ -86,7 +87,7 @@ export const getChatCompletion = async ({
           ...messages,
         ],
         stream: true,
-        stop: ["/STOP/", '###'],
+        stop: ["/STOP/", "###"],
         max_tokens,
         temperature: 1,
       },
@@ -112,7 +113,7 @@ export const getChatCompletion = async ({
         throw Error(`Model '${model}' is unavailable.`);
       case 429:
         throw Error(`OpenAI rate limited.`);
-      
+
       default:
         throw e;
     }
@@ -129,13 +130,18 @@ export const getNaniCompletion = async ({
   const finetunedModel = process.env.FINETUNED_MODEL
   if (!finetunedModel) throw new Error("FINETUNED_MODEL is not set")
   const llm = createLlmClient();
+
+  // check tokens length
+  const tokenCount = countTokens(content, 'finetune') + countTokens("Statement: \nRestatement:###", 'finetune')
+  console.log('tokenCount', tokenCount)
+  
   const response = await llm.createCompletion({
     model: finetunedModel,
     prompt: `Statement: ${content}\nRestatement:###`,
     temperature: 0,
     max_tokens,
     top_p: 0.23,
-    best_of: 17,
+    best_of: 1,
     frequency_penalty: 1.36,
     presence_penalty: 1,
     stop: ["###"],

@@ -1,15 +1,15 @@
 import { Bot, Context } from "grammy";
 import { config } from "dotenv";
-import natural from 'natural';
+import natural from "natural";
 
 config();
 
 export const createTelegramBot = () => {
-    const token = process.env.TELEGRAM_TOKEN;
-    
-    if (!token) throw Error("TELEGRAM_TOKEN is not configured!");
-  
-    return new Bot(process.env.TELEGRAM_TOKEN!)
+  const token = process.env.TELEGRAM_TOKEN;
+
+  if (!token) throw Error("TELEGRAM_TOKEN is not configured!");
+
+  return new Bot(process.env.TELEGRAM_TOKEN!);
 };
 
 export const textAdmin = async (ctx: Context, message: string) => {
@@ -20,24 +20,27 @@ export const textAdmin = async (ctx: Context, message: string) => {
   }
 };
 
-
-export const extractKeywords = (query: string, numKeywords: number = 5): string[] => {
+export const extractKeywords = (
+  query: string,
+  numKeywords: number = 5
+): string[] => {
   const tfidf = new natural.TfIdf();
   tfidf.addDocument(query);
 
-  const keywords = tfidf.listTerms(0)
+  const keywords = tfidf
+    .listTerms(0)
     .slice(0, numKeywords)
     .map((term) => term.term.toLowerCase());
 
   return keywords;
 };
 
-export const createMessageToSave = ({ 
+export const createMessageToSave = ({
   author,
-  message
+  message,
 }: {
   author: string;
   message: string;
 }) => {
-  return `@${author} -> ${message}`
-}
+  return `@${author} -> ${message}`;
+};

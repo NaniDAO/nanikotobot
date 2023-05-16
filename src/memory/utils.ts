@@ -5,85 +5,89 @@ import { generateEmbeddings } from "./generateEmbeddings.ts";
 import { getTimestampAt } from "@/utils.ts";
 
 export const createMilvusClient = memoize(() => {
-    if (!config.uri) throw new Error("MILVUS_URI is not set")
-    return new MilvusClient({ address: config.uri, ssl: config.secure, username: config.user, password: config.password, maxRetries: 5, retryDelay: 30, debug: true });
+  if (!config.uri) throw new Error("MILVUS_URI is not set");
+  return new MilvusClient({
+    address: config.uri,
+    ssl: config.secure,
+    username: config.user,
+    password: config.password,
+    maxRetries: 5,
+    retryDelay: 30,
+    debug: true,
+  });
 });
 
 export const addToNani = async (content: string, source: string) => {
-    const client = createMilvusClient();
-   
-    try {
-        client.connect()
-        const embedding = await generateEmbeddings(content)
-        const fields_data = embedding.map((e) => {
-            return {
-                embedding: e.embedding,
-                timestamp: getTimestampAt(0),
-                content: content,
-                source,
-            }
-        })
+  const client = createMilvusClient();
 
-        client.loadCollectionSync({
-            collection_name: "nani"
-        })
+  try {
+    client.connect();
+    const embedding = await generateEmbeddings(content);
+    const fields_data = embedding.map((e) => {
+      return {
+        embedding: e.embedding,
+        timestamp: getTimestampAt(0),
+        content: content,
+        source,
+      };
+    });
 
-        const res = await client.insert({
-            collection_name: "nani",
-            fields_data,
-            timeout: 60000,
-        })
-        return res
-    } catch (e) {
-        console.error("Error inserting embeddings:", e);
-        throw e;
-    } finally {
-        client.closeConnection()
-    }
-}
+    client.loadCollectionSync({
+      collection_name: "nani",
+    });
+
+    const res = await client.insert({
+      collection_name: "nani",
+      fields_data,
+      timeout: 60000,
+    });
+    return res;
+  } catch (e) {
+    console.error("Error inserting embeddings:", e);
+    throw e;
+  } finally {
+    client.closeConnection();
+  }
+};
 
 export const searchCollection = async ({
-    query,
-    collectionName,
-    topK = 10,
+  query,
+  collectionName,
+  topK = 10,
 }: {
-    query: string;
-    collectionName: string;
-    topK?: number;
+  query: string;
+  collectionName: string;
+  topK?: number;
 }) => {
-    const client = createMilvusClient();
-    try {
-        client.connect()
-        const embedding = await generateEmbeddings(query).then((embeddings) => {
-            let final: number[] = []
-            embeddings.forEach((element) => {
-                element.embedding.forEach((e) => {
-                    final.push(e)
-                })
-            });
-            return final
+  const client = createMilvusClient();
+  try {
+    client.connect();
+    const embedding = await generateEmbeddings(query).then((embeddings) => {
+      let final: number[] = [];
+      embeddings.forEach((element) => {
+        element.embedding.forEach((e) => {
+          final.push(e);
         });
+      });
+      return final;
+    });
 
-        client.loadCollectionSync({
-            collection_name: collectionName
-        })
+    client.loadCollectionSync({
+      collection_name: collectionName,
+    });
 
-        const res = await client.search({
-            collection_name: collectionName,
-            vector_type: DataType.FloatVector,
-            vectors: [embedding],
-            topk: topK,
-            metric_type: MetricType.IP,
-        });
-        return res;
-    } catch (e) {
-        console.error("Error searching embeddings:", e);
-        throw e;
-    } finally {
-        client.closeConnection()
-    }
-}
-
-
-
-
+    const res = await client.search({
+      collection_name: collectionName,
+      vector_type: DataType.FloatVector,
+      vectors: [embedding],
+      topk: topK,
+      metric_type: MetricType.IP,
+    });
+    return res;
+  } catch (e) {
+    console.error("Error searching embeddings:", e);
+    throw e;
+  } finally {
+    client.closeConnection();
+  }
+};
