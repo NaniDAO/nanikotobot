@@ -43,8 +43,7 @@ client.on('messageCreate', async (message: Message) => {
         const replied = await message.channel.send(response);
         await addToNani(createMessageToSave({ author: replied.author.username, message: response }), "discord");        
     } } catch (e) {
-        console.error(e)
-        await message.channel.send('Something went wrong. Please try again later. @nerderlyne')
+        console.error(e);
     }
 });
 

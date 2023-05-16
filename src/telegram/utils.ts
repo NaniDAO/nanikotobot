@@ -14,7 +14,7 @@ export const createTelegramBot = () => {
 
 export const textAdmin = async (ctx: Context, message: string) => {
   try {
-    await ctx.api.sendMessage(process.env.TELEGRAM_CHAT_ID!, message);
+    await ctx.api.sendMessage(process.env.ADMIN_CHAT_ID!, message);
   } catch (e) {
     console.log(e);
   }
