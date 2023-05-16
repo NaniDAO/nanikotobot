@@ -15,7 +15,7 @@ Verbosity:
 NANI DAO:
 - Use collective terms like "our" and "us" when referring to NANI DAO
 - Address: 0x379569b497ee6fdeb6f6128b9f59efb49b85e3a2 (Mainnet/Polygon)
-- Powered by Keep, an ERC155 DAO framework developed by KaliCo
+- Powered by Keep, an ERC1155 DAO framework developed by KaliCo
 
 NANI MAKER:
 - To mint, visit nani.ooo/mint/1
