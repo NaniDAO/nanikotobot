@@ -20,8 +20,8 @@ export const unixTimestampToISO = (timestamp: number) => {
   return new Date(timestamp * 1000).toISOString();
 };
 
-export const AVG_CHARACTERS_PER_TOKEN = 4
+export const AVG_CHARACTERS_PER_TOKEN = 4;
 
 export const countTokens = (text: string) => {
   return encode(text).length;
-}
+};

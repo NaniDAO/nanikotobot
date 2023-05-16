@@ -12,19 +12,19 @@ const configuration = new Configuration({
 export const openai = new OpenAIApi(configuration);
 
 export const contextWindowSize = {
-  'gpt-3.5-turbo': 4000,
-  'gpt-4': 4000,
+  "gpt-3.5-turbo": 4000,
+  "gpt-4": 4000,
 };
 
 export const createLlmClient = memoize(() => {
-  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not set")
+  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not set");
 
   const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
   });
 
   return new OpenAIApi(configuration);
-})
+});
 
 const parseChunk = (chunk: Buffer): string[] =>
   chunk
@@ -70,8 +70,8 @@ export const getChatCompletion = async ({
     let reply = "";
     const internalCallback = (message: string) => {
       reply += message;
-      console.clear()
-      console.log(reply)
+      console.clear();
+      console.log(reply);
       callback?.(message);
     };
 
@@ -86,7 +86,7 @@ export const getChatCompletion = async ({
           ...messages,
         ],
         stream: true,
-        stop: ["/STOP/", '###'],
+        stop: ["/STOP/", "###"],
         max_tokens,
         temperature: 1,
       },
@@ -112,11 +112,9 @@ export const getChatCompletion = async ({
         throw Error(`Model '${model}' is unavailable.`);
       case 429:
         throw Error(`OpenAI rate limited.`);
-      
+
       default:
         throw e;
     }
   }
 };
-
-
