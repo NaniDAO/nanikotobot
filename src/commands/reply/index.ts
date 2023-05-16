@@ -32,7 +32,7 @@ export const getReply = async ({
     const response = await getChatCompletion({
         messages,
         system_prompt,
-        model: "gpt-4",
+        model: "gpt-3.5-turbo",
     });
     console.log('response', response)
     // adding a rephrasing step to make the response more human(ross)-like
