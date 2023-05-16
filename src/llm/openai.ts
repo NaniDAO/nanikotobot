@@ -119,4 +119,31 @@ export const getChatCompletion = async ({
   }
 };
 
+export const getNaniCompletion = async ({
+  content,
+  max_tokens
+}: {
+  content: string;
+  max_tokens?: number;
+}) => {
+  const finetunedModel = process.env.FINETUNED_MODEL
+  if (!finetunedModel) throw new Error("FINETUNED_MODEL is not set")
+  const llm = createLlmClient();
+  const response = await llm.createCompletion({
+    model: finetunedModel,
+    prompt: `Statement: ${content}\nRestatement:###`,
+    temperature: 0,
+    max_tokens,
+    top_p: 0.23,
+    best_of: 17,
+    frequency_penalty: 1.36,
+    presence_penalty: 1,
+    stop: ["###"],
+  })
+
+  const reply = response?.data?.choices?.[0]?.text?.replace(/@\w+/g, '').trim();
+
+  return reply
+}
+
 

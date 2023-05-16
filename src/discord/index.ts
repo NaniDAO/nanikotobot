@@ -24,9 +24,8 @@ client.once('ready', () => {
 client.on('messageCreate', async (message: Message) => {
     try {
     if (!message.content.startsWith('.') && !message.author.bot) {
-       
         await addToNani(createMessageToSave({ author: message.author.username, message: message.content }), "discord");
-        const messages = await message.channel.messages.fetch({ limit: 5 });
+        const messages = await message.channel.messages.fetch({ limit: 2 });
         const messageChain: ChatCompletionRequestMessage[] = [...messages.values()].map((message) => {
             return {
                 name: message.author.username,
@@ -39,9 +38,10 @@ client.on('messageCreate', async (message: Message) => {
             platform: 'discord',
             messages: [...messageChain],
         });
-
-        const replied = await message.channel.send(response);
-        await addToNani(createMessageToSave({ author: replied.author.username, message: response }), "discord");        
+        if (response) {
+            const replied = await message.channel.send(response);
+            await addToNani(createMessageToSave({ author: replied.author.username, message: response }), "discord");  
+        }      
     } } catch (e) {
         console.error(e);
     }
