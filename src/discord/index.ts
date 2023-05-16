@@ -128,9 +128,10 @@ export function initDiscord() {
     try {
       if (!validate(message)) return;
 
+      const DEV_CHANNEL_ID = process.env.DEV_CHANNEL_ID;
+      if (!DEV_CHANNEL_ID) throw new Error("DEV_CHANNEL_ID not set");
+
       if (isDev) {
-        const DEV_CHANNEL_ID = process.env.DEV_CHANNEL_ID;
-        if (!DEV_CHANNEL_ID) throw new Error("DEV_CHANNEL_ID not set");
         if (message.channel.id == DEV_CHANNEL_ID) {
             if (isProposal(message)) {
                 handleNewProposal(message);
@@ -139,6 +140,8 @@ export function initDiscord() {
             }
         }
         return 
+      } else if (message.channel.id == DEV_CHANNEL_ID) {
+        return
       }
 
       const PROPOSAL_CHANNEL_ID = process.env.PROPOSAL_CHANNEL_ID;

@@ -33,7 +33,9 @@ export const getReply = async ({
         messages,
         system_prompt,
         model: "gpt-3.5-turbo",
+        max_tokens,
     });
+
     console.log('response', response)
     // adding a rephrasing step to make the response more human(ross)-like
     const rephrased = await getNaniCompletion({

@@ -122,10 +122,8 @@ export const getChatCompletion = async ({
 
 export const getNaniCompletion = async ({
   content,
-  max_tokens
 }: {
   content: string;
-  max_tokens?: number;
 }) => {
   const finetunedModel = process.env.FINETUNED_MODEL
   if (!finetunedModel) throw new Error("FINETUNED_MODEL is not set")
@@ -133,13 +131,14 @@ export const getNaniCompletion = async ({
 
   // check tokens length
   const tokenCount = countTokens(content, 'finetune') + countTokens("Statement: \nRestatement:###", 'finetune')
-  console.log('tokenCount', tokenCount)
+  const max_tokens = 4000 - tokenCount
+  if (max_tokens < 0) return undefined
   
   const response = await llm.createCompletion({
     model: finetunedModel,
     prompt: `Statement: ${content}\nRestatement:###`,
     temperature: 0,
-    max_tokens,
+    max_tokens: max_tokens,
     top_p: 0.23,
     best_of: 1,
     frequency_penalty: 1.36,
