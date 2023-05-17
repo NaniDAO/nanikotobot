@@ -37,10 +37,11 @@ export const getReply = async ({
     });
 
     console.log('response', response)
-    // adding a rephrasing step to make the response more human(ross)-like
-    const rephrased = await getNaniCompletion({
-        content: response,
-    });
+    
+    // nuking ross-bot for now, will finetune with more conversational data later
+    // const rephrased = await getNaniCompletion({
+    //     content: response,
+    // });
 
-    return rephrased || response;
+    return response;
 }
