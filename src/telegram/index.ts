@@ -9,7 +9,7 @@ import { Context } from "grammy";
 import { updateHistory, getHistory, getHistoricalContext } from "./history";
 import { addToNani } from "@/memory/utils";
 import { INVALID_GROUP } from "@/constants";
-import { getReply } from "@/commands/reply";
+import { getReply, handlePageSummary } from "@/commands/reply";
 
 config();
 
@@ -53,6 +53,7 @@ export const handleNewMessage = async (ctx: Context) => {
     if (!validateMessage(ctx) || !validateChat(ctx)) {
       return;
     }
+  
 
     const message = ctx?.message?.text as string;
     const date = (await ctx?.message?.date) as number;
@@ -75,9 +76,12 @@ export const handleNewMessage = async (ctx: Context) => {
       });
     });
 
+    const pageSummary = await handlePageSummary(message);
+
     const response = await getReply({
       platform: "telegram",
       messages: [...messageChain],
+      soup: pageSummary ? pageSummary : undefined,
     });
 
     const reply = await ctx.api.sendMessage(ctx?.chat?.id ?? "", response, {

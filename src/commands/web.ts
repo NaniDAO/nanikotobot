@@ -61,13 +61,11 @@ export const getPageSummary = async (maxSummaryTokens: number, url: string) => {
     .turndown(htmlContent)
     .replace(/\\_/g, "_");
 
-  const markdownTokens = countTokens(markdownContent);
-
   const chunks: string[] = [];
   let currentChunkLines: string[] = [];
   let currentChunkTokens = 0;
   for (const line of markdownContent.split("\n")) {
-    const lineTokens = countTokens(line);
+    const lineTokens = countTokens(line, "main");
     if (currentChunkTokens + lineTokens > maxCompletionTokens) {
       chunks.push(currentChunkLines.join("\n"));
       currentChunkLines = [];
@@ -78,7 +76,7 @@ export const getPageSummary = async (maxSummaryTokens: number, url: string) => {
   }
 
   let lastChunk = currentChunkLines.join("\n");
-  if (countTokens(lastChunk) > maxCompletionTokens) {
+  if (countTokens(lastChunk, "main") > maxCompletionTokens) {
     const characterLimit = Math.round(
       maxCompletionTokens * AVG_CHARACTERS_PER_TOKEN
     );
@@ -110,7 +108,8 @@ export const getPageSummary = async (maxSummaryTokens: number, url: string) => {
     .map(
       (chunk) =>
         `=== SUMMARIZED CHUNK (${countTokens(
-          chunk
+          chunk,
+          "main"
         )} tokens) ===\n\n${chunk}\n\n`
     )
     .join("");

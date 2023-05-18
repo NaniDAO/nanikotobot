@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { getReply } from "@/commands/reply";
+import { getReply, handlePageSummary } from "@/commands/reply";
 import { addToNani } from "@/memory/utils";
 import { createMessageToSave } from "@/telegram/utils";
 import { Client, GatewayIntentBits, Message } from "discord.js";
@@ -8,6 +8,7 @@ import {
   ChatCompletionRequestMessageRoleEnum,
 } from "openai";
 import { isDev } from "@/index.ts";
+import { getPageSummary } from "@/commands/web";
 
 config();
 
@@ -21,42 +22,48 @@ const validate = (message: Message) => {
     return true;
 }
 
+
 const handleDiscordReply = async (message: Message) => {
-    await addToNani(
-        createMessageToSave({
+  console.info(`[discord] ${message.author.username}: ${message.content}`)
+  const pageSummary = await handlePageSummary(message.content);
+
+  await addToNani(
+      createMessageToSave({
           author: message.author.username,
           message: message.content,
-        }),
-        "discord"
-      );
-      const messages = await message.channel.messages.fetch({ limit: 2 });
-      const messageChain: ChatCompletionRequestMessage[] = [
-        ...messages.values(),
-      ]
-        .map((message) => {
+      }),
+      "discord"
+  );
+  
+  const messages = await message.channel.messages.fetch({ limit: 2 });
+  const messageChain: ChatCompletionRequestMessage[] = [
+      ...messages.values(),
+  ]
+      .map((message) => {
           return {
-            name: message.author.username,
-            content: message.content,
-            role: message.author.bot
+              name: message.author.username,
+              content: message.content,
+              role: message.author.bot
               ? "assistant"
               : ("user" as ChatCompletionRequestMessageRoleEnum),
           };
-        })
-        .reverse();
+      })
+      .reverse();
 
-      const response = await getReply({
-        platform: "discord",
-        messages: [...messageChain],
-      });
+  const response = await getReply({
+      platform: "discord",
+      messages: [...messageChain],
+      soup: pageSummary ? pageSummary : undefined,  
+  });
 
-      const replied = await message.channel.send(response);
-      await addToNani(
-        createMessageToSave({
+  const replied = await message.channel.send(response);
+  await addToNani(
+      createMessageToSave({
           author: replied.author.username,
           message: response,
-        }),
-        "discord"
-    );
+      }),
+      "discord"
+  );
 }
 
 interface Infer {
