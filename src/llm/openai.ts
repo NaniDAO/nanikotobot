@@ -1,10 +1,7 @@
-import { config } from "dotenv";
 import { memoize } from "lodash-es";
 import { OpenAIApi, Configuration, ChatCompletionRequestMessage } from "openai";
 import { AxiosError } from "axios";
 import { countTokens } from "@/utils";
-
-config();
 
 export type Models = "gpt-3.5-turbo" | "gpt-4";
 

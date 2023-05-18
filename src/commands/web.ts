@@ -2,11 +2,8 @@ import { google } from "googleapis";
 import puppeteer from "puppeteer";
 import TurndownService from "turndown";
 
-import { config } from "dotenv";
 import { AVG_CHARACTERS_PER_TOKEN, countTokens } from "@/utils";
 import { contextWindowSize, getChatCompletion } from "@/llm/openai";
-
-config();
 
 export const googleIt = async (query: string): Promise<string> => {
     const { data } = await google.customsearch("v1").cse.list({

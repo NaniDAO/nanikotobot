@@ -1,4 +1,3 @@
-import { config } from "dotenv";
 import { ChatCompletionRequestMessage } from "openai";
 import {
   createMessageToSave,
@@ -11,7 +10,6 @@ import { addToNani } from "@/memory/utils";
 import { INVALID_GROUP } from "@/constants";
 import { getReply, handlePageSummary } from "@/commands/reply";
 
-config();
 
 const validateMessage = (ctx: Context) => {
   if (!ctx.message || !ctx.chat) {

@@ -1,4 +1,3 @@
-import { config } from "dotenv";
 import { getReply, handlePageSummary } from "@/commands/reply";
 import { addToNani } from "@/memory/utils";
 import { createMessageToSave } from "@/telegram/utils";
@@ -9,8 +8,6 @@ import {
 } from "openai";
 import { isDev } from "@/index.ts";
 import { getPageSummary } from "@/commands/web";
-
-config();
 
 const isProposal = (message: Message) => {
     return message.content.startsWith("!propose");
