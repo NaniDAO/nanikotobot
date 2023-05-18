@@ -3,9 +3,6 @@ import { memoize } from "lodash-es";
 import { OpenAIApi, Configuration, ChatCompletionRequestMessage } from "openai";
 import { AxiosError } from "axios";
 import { countTokens } from "@/utils";
-import { getHistoricalContext } from "@/telegram/history";
-import { summarizeHistoricalContext } from "@/telegram/summarize";
-import { createMessageToSave } from "@/telegram/utils";
 
 config();
 
@@ -18,19 +15,19 @@ const configuration = new Configuration({
 export const openai = new OpenAIApi(configuration);
 
 export const contextWindowSize = {
-  'gpt-3.5-turbo': 4000,
-  'gpt-4': 4000,
+  "gpt-3.5-turbo": 4000,
+  "gpt-4": 4000,
 };
 
 export const createLlmClient = memoize(() => {
-  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not set")
+  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not set");
 
   const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
   });
 
   return new OpenAIApi(configuration);
-})
+});
 
 const parseChunk = (chunk: Buffer): string[] =>
   chunk
@@ -81,26 +78,8 @@ export const getChatCompletion = async ({
       callback?.(message);
     };
 
-    const tokenCount = countTokens(messages.map(msg => msg.content).join('\n')) + countTokens(system_prompt) + 1000;
-    console.info(`Token count: ${tokenCount}`)
-    
-    
-    if (tokenCount > contextWindowSize[model]) {
-      // summarize the messages to a single 100 token message
-      const summary = await summarizeHistoricalContext({
-        historicalContext: `${messages.map(msg => createMessageToSave({
-          author: msg.name ?? msg.role,
-          message: msg.content,
-        })).join('\n')}`,
-      })
-
-      messages = [
-        {
-          role: "user",
-          content: summary,
-        }
-      ]
-    }
+    const tokenCount = countTokens(messages.map(msg => msg.content).join('\n'), "main") + countTokens(system_prompt, "main") + 1000;
+    console.info(`Token count: ${tokenCount}`);
 
     const response = await openai.createChatCompletion(
       {
@@ -139,11 +118,42 @@ export const getChatCompletion = async ({
         throw Error(`Model '${model}' is unavailable.`);
       case 429:
         throw Error(`OpenAI rate limited.`);
-      
+
       default:
         throw e;
     }
   }
 };
+
+export const getNaniCompletion = async ({
+  content,
+}: {
+  content: string;
+}) => {
+  const finetunedModel = process.env.FINETUNED_MODEL
+  if (!finetunedModel) throw new Error("FINETUNED_MODEL is not set")
+  const llm = createLlmClient();
+
+  // check tokens length
+  const tokenCount = countTokens(content, 'finetune') + countTokens("Statement: \nRestatement:###", 'finetune')
+  const max_tokens = 2000 - tokenCount
+  if (max_tokens < 0) return undefined
+  
+  const response = await llm.createCompletion({
+    model: finetunedModel,
+    prompt: `Statement: ${content}\nRestatement:###`,
+    temperature: 0,
+    max_tokens: max_tokens,
+    top_p: 0.23,
+    best_of: 1,
+    frequency_penalty: 1.36,
+    presence_penalty: 1,
+    stop: ["###"],
+  })
+
+  const reply = response?.data?.choices?.[0]?.text?.replace(/@\w+/g, '').replace('Restatement:', '').replace('###', '').trim()
+
+  return reply
+}
 
 

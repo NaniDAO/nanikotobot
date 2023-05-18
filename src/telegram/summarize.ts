@@ -2,14 +2,18 @@ import { getChatCompletion } from "@/llm/openai";
 import { interpolateTemplate } from "@/llm/utils";
 import { SUMMARIZE_CONVERSATION, SUMMARIZE_WITH_QUERY } from "./prompt";
 
-export const createOverlappingChunks = (text: string, chunkSize: number, overlap: number) => {
+export const createOverlappingChunks = (
+  text: string,
+  chunkSize: number,
+  overlap: number
+) => {
   const chunks = [];
   let index = 0;
 
   while (index < text.length) {
-      const chunk = text.slice(index, index + chunkSize);
-      chunks.push(chunk);
-      index += chunkSize - overlap;
+    const chunk = text.slice(index, index + chunkSize);
+    chunks.push(chunk);
+    index += chunkSize - overlap;
   }
 
   return chunks;
@@ -22,9 +26,14 @@ export const summarizeHistoricalContext = async ({
   historicalContext: string;
   query?: string;
 }) => {
- 
+  const prompt = `The following text contains information related to the question: "${query}". Your task is to read the text, extract the relevant information, and provide a concise and accurate summary that directly answers the question. Ignore any unrelated content. The summary should be no more than 300 words.
 
-  const prompt = query ? interpolateTemplate(SUMMARIZE_WITH_QUERY, { historicalContext, query }) : interpolateTemplate(SUMMARIZE_CONVERSATION, { conversation: historicalContext });
+  Text to Analyze:
+  \`\`\`
+  ${historicalContext}
+  \`\`\`
+
+  Please provide a summary that answers the question:`;
 
   const summary = await getChatCompletion({
     messages: [
@@ -33,13 +42,11 @@ export const summarizeHistoricalContext = async ({
         content: prompt,
       },
     ],
-    system_prompt: '',
+    system_prompt: "",
     model: "gpt-3.5-turbo",
-    max_tokens: 100,
-    callback: (message) => {
-    }
+    max_tokens: 500,
+    callback: (message) => {},
   });
-
 
   return summary;
 };

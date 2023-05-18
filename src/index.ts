@@ -1,14 +1,11 @@
-import { handleNewMessage } from "./telegram";
-import { createTelegramBot } from "./telegram/utils";
+import { config } from "dotenv";
+import { initDiscord } from "@/discord/";
+import { initTelegram } from "@/telegram/";
 
-const bot = createTelegramBot();
+config();
 
-process.once("SIGINT", () => bot.stop());
-process.once("SIGTERM", () => bot.stop());
+initTelegram();
 
-bot.start();
+initDiscord();
 
-bot.on("message", async (ctx) => handleNewMessage(ctx));
-
-bot.catch(console.error);
-
+export const isDev = process.env.NODE_ENV === "dev";
