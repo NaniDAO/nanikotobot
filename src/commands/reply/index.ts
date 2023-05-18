@@ -33,10 +33,11 @@ export const getReply = async ({
         return getReply({ platform, messages });
     }
     
+    console.info('SYSTEM PROMPT - SOCIAL', system_prompt)
     const response = await getChatCompletion({
         messages,
         system_prompt,
-        model: "gpt-3.5-turbo",
+        model: "gpt-4",
         max_tokens,
     });
 
