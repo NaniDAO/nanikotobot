@@ -18,6 +18,7 @@ const isProposal = (message: Message) => {
 const validate = (message: Message) => {
     if (message.author.bot) return false;
     if (message.content.startsWith(".")) return false;
+    if (["1106332556028289074"].find((id) => id === message.channel.id)) return false; // non bot channels
     return true;
 }
 
