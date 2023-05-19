@@ -8,6 +8,8 @@ import {
   ChatCompletionRequestMessageRoleEnum,
 } from "openai";
 import { isDev } from "@/index.ts";
+import { getChatCompletion } from "@/llm/openai";
+import { handleNaniMaker } from "./handleNaniMaker";
 
 config();
 
@@ -86,22 +88,14 @@ interface Proposal {
 }
 
 const handleNewProposal = async (message: Message) => {
-    // extract the proposal
-    const title = message.content.split("!propose")[1].trim();
+    const request = message.content.split("!propose")[1].trim();
+    console.info('[propose] request ->', request)
 
-    // save the proposal to the redis with the title, author, timestamp
-    // assuming coop for now, but can add token weight later
-    // const proposal: Proposal = {
-    //     title,
-    //     author: message.author.username,
-    //     timestamp: getTimestampAt(0),
-    //     address: NANI_DAO_ADDRESS,
-    //     chainId: 1,
-    //     tokenId: 0,
-    //     votes: [],
-    // }
-    // const tx = 
-    message.channel.send(`Proposal "${title}" created! (NOT IMPLEMENTED)`);
+    /// if request is a valid proposal then create a proposal
+    const response = await getChatCompletion({
+        prompt: "Your task is to create a DAO proposal given the natural language request"
+    })
+    message.channel.send(`Proposal "${request}" created! (NOT IMPLEMENTED)`);
 }
 
 const handleVote = async (message: Message) => {
@@ -109,6 +103,10 @@ const handleVote = async (message: Message) => {
     const vote = message.content.startsWith("👍") ? true : false;
 
     message.channel.send(`Vote "${vote}" created! (NOT IMPLEMENTED)`);
+}
+
+const isNaniMaker = (message: Message) => {
+    return message.content.startsWith("!imagine");
 }
 
 export function initDiscord() {
@@ -136,6 +134,8 @@ export function initDiscord() {
         if (message.channel.id == DEV_CHANNEL_ID) {
             if (isProposal(message)) {
                 handleNewProposal(message);
+            } else if (isNaniMaker(message)) {
+              handleNaniMaker(message);
             } else {
                 handleDiscordReply(message);
             }
@@ -149,7 +149,7 @@ export function initDiscord() {
       if (!PROPOSAL_CHANNEL_ID) throw new Error("PROPOSAL_CHANNEL_ID not set");
 
       if (message.channel.id == PROPOSAL_CHANNEL_ID) {
-        if (message.content.startsWith("!propose")) {
+        if (isProposal(message)) {
             handleNewProposal(message);
         } else {
             handleVote(message);
@@ -159,7 +159,6 @@ export function initDiscord() {
       }
     } catch (e) {
       console.error(e);
-      await message.channel.send("💔 @nerderlyne");
     }
   });
 
