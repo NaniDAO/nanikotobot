@@ -25,7 +25,7 @@ export const handleNaniMaker = async (message: Message) => {
         },
         body: JSON.stringify({
             prompt: prompt,
-            negative_prompt: negative_prompt,
+            negative_prompt: negative_prompt ? negative_prompt : '',
         }),
     });
 
