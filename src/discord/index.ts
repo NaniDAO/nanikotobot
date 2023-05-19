@@ -151,17 +151,18 @@ export function initDiscord() {
       if (message.channel.id == PROPOSAL_CHANNEL_ID) {
         if (isProposal(message)) {
             handleNewProposal(message);
-          
         } else if (isNaniMaker(message)) {
           handleNaniMaker(message);
-        
         } else {
             handleVote(message);
-           
         }
         return
       } else {
-        handleDiscordReply(message);
+        if (isNaniMaker(message)) {
+          handleNaniMaker(message);
+        } else {
+          handleDiscordReply(message);
+        }
         return
       }
     } catch (e) {
