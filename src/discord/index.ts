@@ -92,9 +92,9 @@ const handleNewProposal = async (message: Message) => {
     console.info('[propose] request ->', request)
 
     /// if request is a valid proposal then create a proposal
-    const response = await getChatCompletion({
-        prompt: "Your task is to create a DAO proposal given the natural language request"
-    })
+    // const response = await getChatCompletion({
+    //     prompt: "Your task is to create a DAO proposal given the natural language request"
+    // })
     message.channel.send(`Proposal "${request}" created! (NOT IMPLEMENTED)`);
 }
 
@@ -151,6 +151,8 @@ export function initDiscord() {
       if (message.channel.id == PROPOSAL_CHANNEL_ID) {
         if (isProposal(message)) {
             handleNewProposal(message);
+        } else if (isNaniMaker(message)) {
+          handleNaniMaker(message);
         } else {
             handleVote(message);
         }
