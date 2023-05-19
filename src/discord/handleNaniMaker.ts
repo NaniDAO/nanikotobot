@@ -11,7 +11,11 @@ export const handleNaniMaker = async (message: Message) => {
     // Parse message content
     const parts = message.content.split(' --no ');
     const prompt = parts[0].replace('!imagine ', '');
-    const negative_prompt = parts[1];
+    let negative_prompt = undefined;
+
+    if (parts.length > 1) {
+        negative_prompt = parts[1];
+    }
 
     console.info('[nani-maker] prompt ->', prompt, 'negative_prompt ->', negative_prompt)
     const response = await fetch(ENDPOINT, {
