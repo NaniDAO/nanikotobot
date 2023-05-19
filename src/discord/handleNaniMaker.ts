@@ -33,9 +33,8 @@ export const handleNaniMaker = async (message: Message) => {
         const data = await response.json();
         const buffer = Buffer.from(data.image, 'base64');
         const file = { attachment: buffer, name: 'image.png' };
-        message.channel.send({ files: [file] });
+        message.reply({ files: [file] });
     } else {
         console.error('[nani-maker] error ->', response.body)
-        message.channel.send(`Error: ${response.status} ${response.statusText}`);
     }
 };
