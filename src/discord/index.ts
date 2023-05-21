@@ -20,7 +20,9 @@ const isProposal = (message: Message) => {
 const validate = (message: Message) => {
     if (message.author.bot) return false;
     if (message.content.startsWith(".")) return false;
+    if (message.content === "") return false; // image ?
     if (["1106332556028289074", "1109035377068621824", "1106329959674433566"].find((id) => id === message.channel.id)) return false; // non bot channels
+    
     return true;
 }
 
