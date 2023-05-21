@@ -13,7 +13,7 @@ interface AddTxBody {
     data: string;
     nonce: number;
     title: string;
-    content: any; // Replace 'any' with your actual content type
+    content: any; 
     userId: string;
 }
 

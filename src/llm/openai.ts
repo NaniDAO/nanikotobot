@@ -18,11 +18,27 @@ export const contextWindowSize = {
 };
 
 export const createLlmClient = memoize(() => {
-  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not set");
+  const OPENAI_KEY = process.env.OPENAI_API_KEY;
+  const HELICONE_KEY = process.env.HELICONE_KEY;
+  if (!OPENAI_KEY) throw new Error("OPENAI_API_KEY is not set");
 
-  const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
+  let configuration: Configuration;
+
+  if (HELICONE_KEY) {
+    configuration = new Configuration({
+      apiKey: process.env.OPENAI_API_KEY,
+      basePath: "https://oai.hconeai.com/v1",
+      baseOptions: {
+        headers: {
+          "Helicone-Auth": `Bearer ${HELICONE_KEY}`, 
+        },
+      }
+    });
+  } else {
+    configuration = new Configuration({
+      apiKey: OPENAI_KEY,
+    });
+  }
 
   return new OpenAIApi(configuration);
 });
