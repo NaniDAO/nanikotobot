@@ -10,6 +10,7 @@ import {
 import { isDev } from "@/index.ts";
 import { getChatCompletion } from "@/llm/openai";
 import { handleNaniMaker } from "./handleNaniMaker";
+import { channels } from "@/constants";
 
 config();
 
@@ -21,7 +22,7 @@ const validate = (message: Message) => {
     if (message.author.bot) return false;
     if (message.content.startsWith(".")) return false;
     if (message.content === "") return false; // image ?
-    if (["1106332556028289074", "1109035377068621824", "1106329959674433566"].find((id) => id === message.channel.id)) return false; // non bot channels
+    if ([channels["airdrop"], channels["welcome"], channels["dev"]].find((id) => id === message.channel.id)) return false; // non bot channels
     
     return true;
 }
@@ -153,15 +154,15 @@ export function initDiscord() {
       if (message.channel.id == PROPOSAL_CHANNEL_ID) {
         if (isProposal(message)) {
             handleNewProposal(message);
-        } else if (isNaniMaker(message)) {
-          handleNaniMaker(message);
         } else {
             handleVote(message);
         }
         return
       } else {
-        if (isNaniMaker(message)) {
-          handleNaniMaker(message);
+        if (message.channel.id == channels["maker"]) {
+          if (isNaniMaker(message)) {
+            handleNaniMaker(message);
+          } 
         } else {
           handleDiscordReply(message);
         }
