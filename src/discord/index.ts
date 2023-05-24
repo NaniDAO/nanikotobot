@@ -65,31 +65,6 @@ const handleDiscordReply = async (message: Message) => {
     );
 }
 
-interface Infer {
-    content: string;
-    confidence: number;
-}
-
-interface Vote {
-    // assumption:
-    // - 1 vote per address
-    // - 1 address per discord user
-    // - All discord users are in the coop
-    vote: boolean;
-    userId: string; // discord user id 
-    inferences: Infer[]; // inferred preference based on each message sent
-}
-
-interface Proposal {
-    title: string;
-    author: string;
-    timestamp: number;
-    address: string;
-    chainId: number;
-    tokenId: number;
-    votes: Vote[];
-}
-
 const handleNewProposal = async (message: Message) => {
     const request = message.content.split("!propose")[1].trim();
     console.info('[propose] request ->', request)
@@ -101,15 +76,8 @@ const handleNewProposal = async (message: Message) => {
     message.channel.send(`Proposal "${request}" created! (NOT IMPLEMENTED)`);
 }
 
-const handleVote = async (message: Message) => {
-    // extract the vote 
-    const vote = message.content.startsWith("👍") ? true : false;
-
-    message.channel.send(`Vote "${vote}" created! (NOT IMPLEMENTED)`);
-}
-
 const isNaniMaker = (message: Message) => {
-    return message.content.startsWith("!imagine");
+    return message.content.trim().startsWith("!imagine"); 
 }
 
 export function initDiscord() {
@@ -129,49 +97,46 @@ export function initDiscord() {
   client.on("messageCreate", async (message: Message) => {
     try {
       if (!validate(message)) return;
-
+  
       const DEV_CHANNEL_ID = process.env.DEV_CHANNEL_ID;
       if (!DEV_CHANNEL_ID) throw new Error("DEV_CHANNEL_ID not set");
-
+  
       if (isDev) {
-        if (message.channel.id == DEV_CHANNEL_ID) {
-            if (isProposal(message)) {
-                handleNewProposal(message);
-            } else if (isNaniMaker(message)) {
-              handleNaniMaker(message);
-            } else {
-                handleDiscordReply(message);
-            }
-        }
-        return 
-      } else if (message.channel.id == DEV_CHANNEL_ID) {
-        return
-      }
-
-      const PROPOSAL_CHANNEL_ID = process.env.PROPOSAL_CHANNEL_ID;
-      if (!PROPOSAL_CHANNEL_ID) throw new Error("PROPOSAL_CHANNEL_ID not set");
-
-      if (message.channel.id == PROPOSAL_CHANNEL_ID) {
-        if (isProposal(message)) {
-            handleNewProposal(message);
-        } else {
-            handleVote(message);
-        }
-        return
-      } else {
-        if (message.channel.id == channels["maker"]) {
+        if (message.channel.id === DEV_CHANNEL_ID) {
           if (isNaniMaker(message)) {
             handleNaniMaker(message);
-          } 
+          } else if (isProposal(message)) {
+            handleNewProposal(message);
+          } else {
+            handleDiscordReply(message);
+          }
+        }
+        return;
+      } else if (message.channel.id === DEV_CHANNEL_ID) {
+        return;
+      }
+  
+  
+      if (message.channel.id === channels["proposals"]) {
+        if (isProposal(message)) {
+          handleNewProposal(message);
+        } 
+        // todo: record sentiment
+        return;
+      } 
+      
+      if (message.channel.id === channels["maker"]) {
+          if (isNaniMaker(message)) {
+            handleNaniMaker(message);
+          }
         } else {
           handleDiscordReply(message);
         }
-        return
-      }
     } catch (e) {
       console.error(e);
     }
   });
+  
 
   client.login(DISCORD_TOKEN);
 }
