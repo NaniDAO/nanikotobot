@@ -1,6 +1,5 @@
 import { Message } from "discord.js";
 
-// Parse message content
 const parseMessageContent = (content: string) => {
     const parts = content.includes(' --no ') ? content.split(' --no ') : [content];
     const prompt = parts[0].replace('!imagine ', '');

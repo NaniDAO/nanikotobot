@@ -6,7 +6,8 @@ export const NANI_DAO_ADDRESS = `0x379569b497ee6fdeb6f6128b9f59efb49b85e3a2`
 export const channels = {
     "welcome": "1106332556028289074",
     "airdrop": "1106329959674433566",
-    "maker": "1109035377068621824",
-    "dev": "1109035377068621824",
-    "proposals": "1107678030651986081"
+    "dev": "1107712838027456692",
+    "proposals": "1107678030651986081",
+    "maker": "1109035377068621824"
 }
+

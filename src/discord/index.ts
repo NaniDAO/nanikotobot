@@ -8,7 +8,6 @@ import {
   ChatCompletionRequestMessageRoleEnum,
 } from "openai";
 import { isDev } from "@/index.ts";
-import { getChatCompletion } from "@/llm/openai";
 import { handleNaniMaker } from "./handleNaniMaker";
 import { channels } from "@/constants";
 
@@ -22,7 +21,7 @@ const validate = (message: Message) => {
     if (message.author.bot) return false;
     if (message.content.startsWith(".")) return false;
     if (message.content === "") return false; // image ?
-    if ([channels["airdrop"], channels["welcome"], channels["dev"]].find((id) => id === message.channel.id)) return false; // non bot channels
+    if (message.channel.id === channels["welcome"] || message.channel.id === channels["airdrop"]) return false;
     
     return true;
 }
@@ -96,7 +95,10 @@ export function initDiscord() {
 
   client.on("messageCreate", async (message: Message) => {
     try {
-      if (!validate(message)) return;
+      if (!validate(message)) {
+        console.error('Validated', validate(message))
+        return
+      }
   
       const DEV_CHANNEL_ID = process.env.DEV_CHANNEL_ID;
       if (!DEV_CHANNEL_ID) throw new Error("DEV_CHANNEL_ID not set");
@@ -112,26 +114,23 @@ export function initDiscord() {
           }
         }
         return;
-      } else if (message.channel.id === DEV_CHANNEL_ID) {
-        return;
       }
   
   
-      if (message.channel.id === channels["proposals"]) {
+      if (message.channel.id == channels["proposals"]) {
         if (isProposal(message)) {
           handleNewProposal(message);
         } 
         // todo: record sentiment
-        return;
       } 
       
-      if (message.channel.id === channels["maker"]) {
-          if (isNaniMaker(message)) {
-            handleNaniMaker(message);
-          }
-        } else {
-          handleDiscordReply(message);
-        }
+      if (isNaniMaker(message)) {
+        console.info('NANI MAKER ->', )
+        await handleNaniMaker(message);
+        return
+      } 
+    
+      handleDiscordReply(message);
     } catch (e) {
       console.error(e);
     }
