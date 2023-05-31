@@ -122,14 +122,9 @@ export function initDiscord() {
         return
       } 
 
-      if (message.mentions.has(client.user.id)) { // replies only if mentioned
-        if (message.channel.id == channels["proposals"]) {
-          if (isProposal(message)) {
-            handleNewProposal(message);
-          } 
-          // todo: record sentiment
-        } 
-        
+      if (message.channel.id == channels["proposals"] && isProposal(message) && message.mentions.has(client.user.id)) {
+        handleNewProposal(message);
+      } else if (message.mentions.has(client.user.id)) {
         handleDiscordReply(message); 
       }
     } catch (e) {
