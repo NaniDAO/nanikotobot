@@ -22,7 +22,8 @@ const validate = (message: Message) => {
     if (message.content.startsWith(".")) return false;
     if (message.content === "") return false; // image ?
     if (message.channel.id === channels["welcome"] || message.channel.id === channels["airdrop"]) return false;
-    
+    if (message.content.includes("@here") || message.content.includes("@everyone")) return false;
+ 
     return true;
 }
 
@@ -96,7 +97,6 @@ export function initDiscord() {
   client.on("messageCreate", async (message: Message) => {
     try {
       if (!validate(message)) {
-        console.error('Validated', validate(message))
         return
       }
   
@@ -107,30 +107,31 @@ export function initDiscord() {
         if (message.channel.id === DEV_CHANNEL_ID) {
           if (isNaniMaker(message)) {
             handleNaniMaker(message);
-          } else if (isProposal(message)) {
+          } else if (isProposal(message) && message.mentions.has(client.user.id)) {
             handleNewProposal(message);
-          } else {
+          } else if (message.mentions.has(client.user.id)) {
             handleDiscordReply(message);
           }
         }
         return;
       }
   
-  
-      if (message.channel.id == channels["proposals"]) {
-        if (isProposal(message)) {
-          handleNewProposal(message);
-        } 
-        // todo: record sentiment
-      } 
-      
       if (isNaniMaker(message)) {
         console.info('NANI MAKER ->', )
         await handleNaniMaker(message);
         return
       } 
-    
-      handleDiscordReply(message);
+
+      if (message.mentions.has(client.user.id)) { // replies only if mentioned
+        if (message.channel.id == channels["proposals"]) {
+          if (isProposal(message)) {
+            handleNewProposal(message);
+          } 
+          // todo: record sentiment
+        } 
+        
+        handleDiscordReply(message); 
+      }
     } catch (e) {
       console.error(e);
     }

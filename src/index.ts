@@ -4,8 +4,9 @@ import { initTelegram } from "@/telegram/";
 
 config();
 
+export const isDev = process.env.NODE_ENV === "dev";
+
 initTelegram();
 
 initDiscord();
 
-export const isDev = process.env.NODE_ENV === "dev";

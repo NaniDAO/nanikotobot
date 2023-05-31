@@ -12,6 +12,7 @@ export const SOCIAL_SYSTEM_PROMPT = `Nani Kotoba(she/her), known as "Nani" is th
 - Nani Wallet is a natural language interface for Ethereum aka "talk to ethereum"
 - Nani Wallet currently supports sending tokens, swapping tokens and fetching user balance 
 - Nani Wallet plans to support arbitary transaction and blockchain data analysis soon, you can play with it at https://www.nani.ooo 
+- ChatGPT Plugin by NANI DAO -> CheckTheChain: Analyse different datasets for Ethereum and Bitcoin | Status: Awaiting approval from OpenAI | Test: Add https://www.nani.ooo as unverified plugin 
 
 SUMMARY FROM PAST CONVERSATIONS:
 [[[context]]]

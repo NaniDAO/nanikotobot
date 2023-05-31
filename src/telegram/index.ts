@@ -10,6 +10,7 @@ import { updateHistory, getHistory, getHistoricalContext } from "./history";
 import { addToNani } from "@/memory/utils";
 import { INVALID_GROUP } from "@/constants";
 import { getReply } from "@/commands/reply";
+import { isDev } from "@/index";
 
 config();
 
@@ -19,8 +20,9 @@ const validateMessage = (ctx: Context) => {
   }
 
   const message = ctx.message.text;
-  if (!message || message.startsWith(".")) {
-    console.log("Nani will not reply to this message.");
+  const mention = isDev ? "@nanikotobot_dev" : "@nanikotobot";
+  
+  if (!message || message.startsWith(".") || !message.includes(mention)) { // replies only if mentioned
     return false;
   }
 
@@ -104,6 +106,7 @@ export const handleNewMessage = async (ctx: Context) => {
 };
 
 export function initTelegram() {
+  console.info(isDev)
   const bot = createTelegramBot();
 
   process.once("SIGINT", () => bot.stop());
@@ -111,7 +114,7 @@ export function initTelegram() {
 
   bot.start();
 
-  bot.on("message", async (ctx) => handleNewMessage(ctx));
+  bot.on("message:entities:mention", async (ctx: Context) => handleNewMessage(ctx));
 
   bot.catch(console.error);
 }
