@@ -21,7 +21,6 @@ const validate = (message: Message) => {
     if (message.author.bot) return false;
     if (message.content.startsWith(".")) return false;
     if (message.content === "") return false; // image ?
-    if (message.channel.id === channels["welcome"] || message.channel.id === channels["airdrop"]) return false;
     if (message.content.includes("@here") || message.content.includes("@everyone")) return false;
  
     return true;
