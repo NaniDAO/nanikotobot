@@ -1,4 +1,4 @@
-import { getChatCompletion } from "@/llm/openai";
+import { getChatCompletion } from "@/llm";
 
 export const createOverlappingChunks = (
   text: string,

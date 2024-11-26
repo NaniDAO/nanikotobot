@@ -1,83 +1,145 @@
 import { config } from "dotenv";
 import { getReply } from "@/commands/reply";
-import { addToNani } from "@/memory/utils";
-import { createMessageToSave } from "@/telegram/utils";
 import { Client, GatewayIntentBits, Message } from "discord.js";
-import {
-  ChatCompletionRequestMessage,
-  ChatCompletionRequestMessageRoleEnum,
-} from "openai";
-import { isDev } from "@/index.ts";
+import { ChatCompletionRequestMessage } from "openai";
 import { handleNaniMaker } from "./handleNaniMaker";
 import { channels } from "@/constants";
+import { getAction, getReaction, summarizeMessages } from "@/llm";
 
 config();
 
-const isProposal = (message: Message) => {
-    return message.content.startsWith("!propose");
+const DISCORD_BOT_ID = process.env.DISCORD_BOT_ID;
+
+if (!DISCORD_BOT_ID) {
+  throw new Error("NO DISCORD BOT ID SET");
 }
+
+const isProposal = (message: Message) => {
+  return message.content.startsWith("!propose");
+};
+
+const replaceUserMentionsWithUsernames = (message: Message) => {
+  let content = message.content;
+  // Replace all user mentions in the message
+  message.mentions.users.forEach((user) => {
+    const userMention = `<@${user.id}>`;
+    const userMentionNick = `<@!${user.id}>`;
+    content = content
+      .replace(userMention, `@${user.username}`)
+      .replace(userMentionNick, `@${user.username}`);
+  });
+  return content;
+};
 
 const validate = (message: Message) => {
-    if (message.author.bot) return false;
-    if (message.content.startsWith(".")) return false;
-    if (message.content === "") return false; // image ?
-    if (message.content.includes("@here") || message.content.includes("@everyone")) return false;
- 
-    return true;
-}
+  if (message.author.bot) return false;
+  if (message.content.startsWith(".")) return false;
+  if (message.content === "") return false; // image ?
+  if (
+    message.content.includes("@here") ||
+    message.content.includes("@everyone")
+  )
+    return false;
+
+  return true;
+};
 
 const handleDiscordReply = async (message: Message) => {
-    await addToNani(
-        createMessageToSave({
-          author: message.author.username,
-          message: message.content,
-        }),
-        "discord"
-      );
-      const messages = await message.channel.messages.fetch({ limit: 2 });
-      const messageChain: ChatCompletionRequestMessage[] = [
-        ...messages.values(),
-      ]
-        .map((message) => {
-          return {
-            name: message.author.username,
-            content: message.content,
-            role: message.author.bot
+  // @TODO update embedding db
+  // await addToNani(
+  //   createMessageToSave({
+  //     author: message.author.username,
+  //     message: message.content,
+  //   }),
+  //   "discord"
+  // );
+
+  const action = await getAction({
+    platform: "discord",
+    message: {
+      role: "user",
+      content: replaceUserMentionsWithUsernames(message),
+    },
+  });
+
+  console.log("ACTION", action);
+
+  if (action === "[REPLY]") {
+    const messages = await message.channel.messages.fetch({ limit: 4 });
+    console.log();
+    const messageChain: ChatCompletionRequestMessage[] = [...messages.values()]
+      .map((message) => {
+        console.log("MESSAGE", message.author.id, DISCORD_BOT_ID);
+        return {
+          name: message.author.username,
+          content: replaceUserMentionsWithUsernames(message),
+          role:
+            parseInt(message.author.id) == parseInt(DISCORD_BOT_ID)
               ? "assistant"
-              : ("user" as ChatCompletionRequestMessageRoleEnum),
-          };
-        })
-        .reverse();
+              : ("user" as ChatCompletionRequestMessage["role"]),
+        };
+      })
+      .reverse();
 
-      const response = await getReply({
-        platform: "discord",
-        messages: [...messageChain],
-      });
+    const summary = ""; // await summarizeMessages(messageChain);
 
-      const replied = await message.channel.send(response);
-      await addToNani(
-        createMessageToSave({
-          author: replied.author.username,
-          message: response,
-        }),
-        "discord"
-    );
-}
+    console.log("SUMMARY: ", summary);
+
+    const response = await getReply({
+      platform: "discord",
+      summary,
+      messages: [
+        {
+          role: "user",
+          content: message.content.trim(),
+        },
+      ],
+    });
+
+    if (response.length < 2000) {
+      await message.channel.send(response);
+    } else {
+      // Split long messages into chunks of 2000 characters
+      const chunks = response.match(/.{1,2000}/g) || [];
+      for (const chunk of chunks) {
+        await message.channel.send(chunk);
+      }
+    }
+  } else if (action === "[REACT]") {
+    const reaction = await getReaction({
+      platform: "discord",
+      message: {
+        role: "user",
+        content: replaceUserMentionsWithUsernames(message),
+      },
+    });
+
+    console.log("Reaction:", reaction);
+    message.react(reaction);
+  } else {
+    // [IGNORE]
+  }
+
+  // @TODO add embeddings
+  // await addToNani(
+  //   createMessageToSave({
+  //     author: replied.author.username,
+  //     message: response,
+  //   }),
+  //   "discord"
+  // );
+};
 
 const handleNewProposal = async (message: Message) => {
-    const request = message.content.split("!propose")[1].trim();
-    console.info('[propose] request ->', request)
+  const request = message.content.split("!propose")[1].trim();
+  console.info("[propose] request ->", request);
 
-    /// if request is a valid proposal then create a proposal
-    // const response = await getChatCompletion({
-    //     prompt: "Your task is to create a DAO proposal given the natural language request"
-    // })
-    message.channel.send(`Proposal "${request}" created! (NOT IMPLEMENTED)`);
-}
+  message.channel.send(`Proposal "${request}" created! (NOT IMPLEMENTED)`);
+};
 
 const isNaniMaker = (message: Message) => {
-    return message.content.trim().startsWith("!imagine"); 
-}
+  return message.content.trim().startsWith("!imagine");
+};
 
 export function initDiscord() {
   const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
@@ -95,42 +157,37 @@ export function initDiscord() {
 
   client.on("messageCreate", async (message: Message) => {
     try {
-      if (!validate(message)) {
-        return
-      }
-  
-      const DEV_CHANNEL_ID = process.env.DEV_CHANNEL_ID;
-      if (!DEV_CHANNEL_ID) throw new Error("DEV_CHANNEL_ID not set");
-  
-      if (isDev) {
-        if (message.channel.id === DEV_CHANNEL_ID) {
-          if (isNaniMaker(message)) {
-            handleNaniMaker(message);
-          } else if (isProposal(message) && message.mentions.has(client.user.id)) {
-            handleNewProposal(message);
-          } else if (message.mentions.has(client.user.id)) {
-            handleDiscordReply(message);
-          }
-        }
+      if (!client.user) {
+        // bot not ready
         return;
       }
-  
-      if (isNaniMaker(message)) {
-        console.info('NANI MAKER ->', )
-        await handleNaniMaker(message);
-        return
-      } 
 
-      if (message.channel.id == channels["proposals"] && isProposal(message) && message.mentions.has(client.user.id)) {
+      if (!validate(message)) {
+        return;
+      }
+
+      if (isNaniMaker(message)) {
+        console.info("NANI MAKER ->");
+        await handleNaniMaker(message);
+        return;
+      }
+
+      if (
+        message.channel.id == channels["proposals"] &&
+        isProposal(message) &&
+        message.mentions.has(client.user.id)
+      ) {
         handleNewProposal(message);
-      } else if (message.mentions.has(client.user.id)) {
-        handleDiscordReply(message); 
+      } else {
+        console.log("HANDLE DISCORD REPLY");
+        handleDiscordReply(message);
       }
     } catch (e) {
       console.error(e);
     }
   });
-  
 
   client.login(DISCORD_TOKEN);
 }
+
+initDiscord();

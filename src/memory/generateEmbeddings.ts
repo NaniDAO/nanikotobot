@@ -1,4 +1,3 @@
-import { createLlmClient } from "@/llm/openai";
 import { decode, encode } from "gpt-3-encoder";
 
 const prepareDocument = (document: string): string => {

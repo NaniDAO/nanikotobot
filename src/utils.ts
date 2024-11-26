@@ -2,6 +2,9 @@ import { v4 as uuid } from "uuid";
 import { encode } from "gpt-3-encoder";
 import { get_encoding, encoding_for_model } from "@dqbd/tiktoken";
 
+export const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 export const getVectorId = () => {
   return uuid().toString();
 };
@@ -23,8 +26,8 @@ export const unixTimestampToISO = (timestamp: number) => {
 
 export const AVG_CHARACTERS_PER_TOKEN = 4;
 
-export const countTokens = (text: string, type: 'main' | 'finetune') => {
-  if (type === 'main') {
+export const countTokens = (text: string, type: "main" | "finetune") => {
+  if (type === "main") {
     const encoding = get_encoding("cl100k_base");
     return encoding.encode(text).length;
   } else {

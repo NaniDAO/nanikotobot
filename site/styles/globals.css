@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 3%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 3%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.bg-chrome {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%);
+}
+
+.text-chrome {
+  background: linear-gradient(135deg, #888 0%, #eee 50%, #888 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.border-chrome {
+  border-image: linear-gradient(135deg, #888 0%, #eee 50%, #888 100%) 1;
+}
+
+@keyframes neon-pulse {
+  /* Full glow state */
+  0%,
+  100% {
+    text-shadow:
+      /* White inner glow */ 0 0 3px #fff, 0 0 10px #fff,
+      0 0 15px #fff, /* Cyan outer glow */ 0 0 10px #00ffff, 0 0 25px #00ffff,
+      0 0 30px #00ffff, 0 0 40px #00ffff, 0 0 55px #00ffff;
+  }
+
+  /* Dim glow state */
+  50% {
+    text-shadow:
+      /* White inner glow */ 0 0 2px #fff, 0 0 5px #fff,
+      0 0 7px #fff, /* Cyan outer glow */ 0 0 10px #00ffff, 0 0 17px #00ffff,
+      0 0 20px #00ffff, 0 0 25px #00ffff, 0 0 37px #00ffff;
+  }
+}
+
+.neon-text {
+  animation: neon-pulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.glassmorphism {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
