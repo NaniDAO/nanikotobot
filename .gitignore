@@ -6,3 +6,7 @@ node_modules
 # twitter
 twitter-cookies.json
 seen_tweets.json
+
+# site
+site/.next*
+/site/.next
