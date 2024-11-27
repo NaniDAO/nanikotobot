@@ -2,3 +2,7 @@
 node_modules
 
 /store
+
+# twitter
+twitter-cookies.json
+seen_tweets.json
