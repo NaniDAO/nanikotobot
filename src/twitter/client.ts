@@ -1,10 +1,10 @@
-import { Scraper } from "goat-x";
+import { Scraper } from "agent-twitter-client";
 import fs from "fs";
 import path from "path";
 import { ApiResponseError, TwitterApi } from "twitter-api-v2";
 
 import { init } from "./actions";
-import { generateTweet, getAction } from "@/llm";
+import { generateTweet, getAction, getTweetScore } from "@/llm";
 import { getReply } from "@/commands/reply";
 import { TwitterApiRateLimitPlugin } from "@twitter-api-v2/plugin-rate-limit";
 import { sleep } from "@/utils";
@@ -88,9 +88,10 @@ export const createXAgentClient = async ({
 
   return {
     init: async () => await init(client, { username, password }),
+    scraper: client,
     getTimeline: async () => {
       try {
-        return await client.fetchHomeTimeline(50, Array.from(seenTweetIds));
+        return await client.fetchHomeTimeline(100, Array.from(seenTweetIds));
       } catch (error) {
         if (error?.response?.status === 431) {
           console.log(`[431 ERROR]`);
@@ -113,21 +114,22 @@ export const createXAgentClient = async ({
     sendTweet: client.sendTweet.bind(client),
     generateTweet: generateTweet.bind(client),
     addSeenTweetId: addAndSaveSeenTweetId,
+    getScore: getTweetScore.bind(client),
     like: async (tweetId: string) =>
       api && userId ? await client.likeTweet(tweetId) : null,
     retweet: async (tweetId: string) =>
       api && userId ? await client.retweet(tweetId) : null,
     handleTweet: async (tweet: TimelineTweet) => {
+      if (!tweet || tweet?.lang !== "en" || !tweet.full_text || !tweet.id_str) {
+        addAndSaveSeenTweetId(tweet?.id_str);
+        return;
+      }
+
       console.log(`
             📱 Tweet
             ${tweet.full_text}
             ❤️ ${tweet.favorite_count} 🔄 ${tweet.retweet_count} 💬 ${tweet.reply_count}
           `);
-
-      if (!tweet || tweet?.lang !== "en" || !tweet.full_text || !tweet.id_str) {
-        addAndSaveSeenTweetId(tweet?.id_str);
-        return;
-      }
 
       const action = await getAction({
         message: {
@@ -151,12 +153,6 @@ export const createXAgentClient = async ({
             if (api && userId) {
               await autoRetryOnRateLimitError(async () => {
                 const response = await client.likeTweet(tweet.id_str);
-                // const rateLimit = await rateLimitPlugin.v2.getRateLimit(
-                //   "users/likes"
-                // );
-                // console.log(
-                //   `Like rate limit: ${rateLimit.remaining}/${rateLimit.limit}`
-                // );
                 return response;
               });
             } else {
@@ -168,12 +164,6 @@ export const createXAgentClient = async ({
             if (api && userId) {
               await autoRetryOnRateLimitError(async () => {
                 const response = await client.retweet(tweet.id_str);
-                // const rateLimit = await rateLimitPlugin.v1.getRateLimit(
-                //   "users/retweets"
-                // );
-                // console.log(
-                //   `Retweet rate limit: ${rateLimit?.remaining}/${rateLimit?.limit}`
-                // );
                 return response;
               });
             } else {
@@ -187,12 +177,7 @@ export const createXAgentClient = async ({
                 const response = await client.followUser(
                   tweet?.username ?? tweet.user_id_str
                 );
-                // const rateLimit = await rateLimitPlugin.v1.getRateLimit(
-                //   "users/follows"
-                // );
-                // console.log(
-                //   `Follow rate limit: ${rateLimit?.remaining}/${rateLimit?.limit}`
-                // );
+
                 return response;
               });
             } else {
@@ -201,21 +186,45 @@ export const createXAgentClient = async ({
             break;
 
           case "[QUOTE]": {
-            const quote = await getReply({
-              messages: [
-                {
-                  name: tweet?.username ?? "",
-                  role: "user",
-                  content: tweet.full_text,
-                },
-              ],
-              summary: `Nani is quote tweeting a tweet that has likes: ${
-                tweet.favorite_count ?? 0
-              }, replies: ${tweet.reply_count ?? 0}, retweets: ${
-                tweet.retweet_count ?? 0
-              }`,
-              platform: "twitter",
-            });
+            let score = 0;
+            let quote = "";
+            let attempts = 0;
+
+            while (score < 75 && attempts < 3) {
+              quote = await getReply({
+                messages: [
+                  {
+                    name: tweet?.username ?? "",
+                    role: "user",
+                    content: tweet.full_text,
+                  },
+                ],
+                summary: `Nani is quote tweeting a tweet that has likes: ${
+                  tweet.favorite_count ?? 0
+                }, replies: ${tweet.reply_count ?? 0}, retweets: ${
+                  tweet.retweet_count ?? 0
+                }`,
+                platform: "twitter",
+              });
+
+              console.log(`[TWITTER] Quote attempt: ${quote}`);
+
+              score = await getTweetScore(quote);
+              console.log(`[TWITTER] Quote scored ${score}`);
+              attempts++;
+
+              if (score >= 75) {
+                console.log(`[TWITTER] Using quote with ${score} score`);
+                break;
+              }
+            }
+
+            if (score < 75) {
+              console.log(
+                "[TWITTER] Failed to generate high scoring quote after 3 attempts, skipping"
+              );
+              return;
+            }
 
             if (api && userId) {
               await autoRetryOnRateLimitError(async () => {
@@ -223,12 +232,6 @@ export const createXAgentClient = async ({
                   quote,
                   tweet.id_str
                 );
-                // const rateLimit = await rateLimitPlugin.v1.getRateLimit(
-                //   "tweets"
-                // );
-                // console.log(
-                //   `Quote rate limit: ${rateLimit?.remaining}/${rateLimit?.limit}`
-                // );
                 return response;
               });
             } else {
@@ -259,25 +262,45 @@ export const createXAgentClient = async ({
           }
 
           case "[REPLY]": {
-            const replyText = await getReply({
-              messages: [
-                {
-                  name: tweet?.username ?? "",
-                  role: "user",
-                  content: tweet.full_text,
-                },
-              ],
-              summary: `likes: ${tweet.favorite_count ?? 0}, replies: ${
-                tweet.reply_count ?? 0
-              }, retweets: ${tweet.retweet_count ?? 0}`,
-              platform: "twitter",
-            });
+            let score = 0;
+            let replyText = "";
+            let attempts = 0;
 
-            if (process.env.AUTO === "true") {
-              await client.sendTweet(replyText, tweet.id_str);
-            } else {
-              // Your existing manual confirmation code...
+            while (score < 75 && attempts < 3) {
+              replyText = await getReply({
+                messages: [
+                  {
+                    name: tweet?.username ?? "",
+                    role: "user",
+                    content: tweet.full_text,
+                  },
+                ],
+                summary: `likes: ${tweet.favorite_count ?? 0}, replies: ${
+                  tweet.reply_count ?? 0
+                }, retweets: ${tweet.retweet_count ?? 0}`,
+                platform: "twitter",
+              });
+
+              console.log(`[TWITTER] Reply attempt: ${replyText}`);
+
+              score = await getTweetScore(replyText);
+              console.log(`[TWITTER] Reply scored ${score}`);
+              attempts++;
+
+              if (score >= 75) {
+                console.log(`[TWITTER] Using reply with ${score} score`);
+                break;
+              }
             }
+
+            if (score < 75) {
+              console.log(
+                "[TWITTER] Failed to generate high scoring reply after 3 attempts, skipping"
+              );
+              break;
+            }
+
+            await client.sendTweet(replyText, tweet.id_str);
             break;
           }
         }

@@ -26,21 +26,7 @@ const xPipeline = async () => {
 
   while (true) {
     try {
-      // const mentions = await client.getMentions();
-
-      // console.log("[MENTIONS RECIEVED]", mentions);
-
-      // for (const mention of mentions) {
-      //   try {
-      //     await client.handleTweet(mention);
-      //     client.addSeenTweetId(mention.id_str);
-      //     await sleep(3000);
-      //   } catch (error) {
-      //     console.error("[MENTION HANDLING ERROR]", error);
-      //     continue;
-      //   }
-      // }
-
+      // @TODO handle mentions
       const timeline = await client.getTimeline();
 
       console.log("[TIMELINE RECIEVED]", timeline.length);
@@ -56,32 +42,20 @@ const xPipeline = async () => {
         }
       }
 
-      const tweet = await client.generateTweet();
-
-      console.log("[GENERATED TWEET]", tweet);
-
-      if (process.env.AUTO === "true") {
-        client.sendTweet(tweet);
-      } else {
-        const rl = readline.createInterface({
-          input: process.stdin,
-          output: process.stdout,
-        });
-
-        const userResponse = await new Promise((resolve) => {
-          rl.question(`Send this tweet? (yes/no)\n${tweet}\n`, (answer) => {
-            rl.close();
-            resolve(answer.toLowerCase());
-          });
-        });
-
-        if (userResponse === "yes") {
-          await client
-            .sendTweet(tweet)
-            .then((tweet) => console.log("[POSTED]", tweet))
-            .catch((e) => console.error(e));
+      let score = 0;
+      let tweet = "";
+      while (score < 75) {
+        tweet = await client.generateTweet();
+        console.log("[TWITTER] Generated tweet", tweet);
+        score = await client.getScore(tweet);
+        console.log(`[TWITTER] Tweet scored ${score}`);
+        if (score >= 75) {
+          console.log(`[TWITTER] Sending tweet with ${score} score`);
+          await client.sendTweet(tweet);
+          break;
         }
       }
+
       // Wait for 30 minutes before next iteration
       await new Promise((resolve) => setTimeout(resolve, 30 * 60 * 1000));
     } catch (error) {
