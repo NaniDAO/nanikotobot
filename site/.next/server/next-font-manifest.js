@@ -1,1 +1,1 @@
-self.__NEXT_FONT_MANIFEST="{\"pages\":{},\"app\":{\"/Users/shiv/Projects/nanikotobot/site/app/layout\":[\"static/media/66f30814ff6d7cdf.p.woff2\"]},\"appUsingSizeAdjust\":false,\"pagesUsingSizeAdjust\":false}"
+self.__NEXT_FONT_MANIFEST="{\"pages\":{},\"app\":{\"/Users/shiv/Projects/nanikotobot/site/app/layout\":[\"static/media/7e8ae1ae3d865da4-s.p.woff2\",\"static/media/1a2bf3d736e66b1c-s.p.woff2\",\"static/media/a34f9d1faa5f3315-s.p.woff2\",\"static/media/427e4a37d3642943-s.p.woff2\"]},\"appUsingSizeAdjust\":true,\"pagesUsingSizeAdjust\":false}"

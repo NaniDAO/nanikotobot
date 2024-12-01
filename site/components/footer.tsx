@@ -1,32 +1,45 @@
 import Link from "next/link";
-import { Twitter, Github, Linkedin } from "lucide-react";
+import { Github, Twitter } from "lucide-react";
+import Image from "next/image";
+import { siteConfig } from "@/lib/config";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-chrome py-8">
+    <footer className="border-t bg-white border-chrome py-8">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
-          <div className="text-chrome mb-4 md:mb-0">
-            © 2023 NaniPilled Corp. All rights reserved.
-          </div>
           <nav className="flex space-x-4">
             <Link
-              href="#"
-              className="text-chrome hover:text-white transition-colors"
+              href={siteConfig.links.twitter}
+              className="text-black hover:scale-110 transition-transform"
+              target="_blank"
+              rel="noopener noreferrer"
             >
               <Twitter size={20} />
             </Link>
             <Link
-              href="#"
-              className="text-chrome hover:text-white transition-colors"
+              href={siteConfig.links.warpcast}
+              className="text-black hover:scale-110 transition-transform"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <Github size={20} />
+              <div className="w-5 h-5">
+                <Image
+                  src="/icons/warpcast.svg"
+                  alt="Warpcast"
+                  width={20}
+                  height={20}
+                  className="text-black"
+                />
+              </div>
             </Link>
             <Link
-              href="#"
-              className="text-chrome hover:text-white transition-colors"
+              href={siteConfig.links.github}
+              className="text-black hover:scale-110 transition-transform"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <Linkedin size={20} />
+              <Github size={20} />
             </Link>
           </nav>
         </div>

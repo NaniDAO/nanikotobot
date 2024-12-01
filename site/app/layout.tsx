@@ -1,6 +1,8 @@
 import { cn } from "@/lib/utils";
 import "@/styles/globals.css";
-import { GeistMono } from "geist/font/mono";
+import { sans, serif, mono } from "@/lib/fonts";
+import Header from "@/components/header";
+import Footer from "@/components/footer";
 
 export const metadata = {
   title: "@nanipilled",
@@ -14,13 +16,25 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {process.env.NODE_ENV === "development" && (
+          <script
+            src="https://unpkg.com/react-scan/dist/auto.global.js"
+            async
+          />
+        )}
+      </head>
       <body
         className={cn(
-          GeistMono.className,
-          "font-mono bg-black text-white min-h-screen flex flex-col"
+          sans.variable,
+          serif.variable,
+          mono.variable,
+          "font-mono bg-black text-foreground min-h-screen flex flex-col"
         )}
       >
-        {children}
+        <Header />
+        <main className="flex-1">{children}</main>
+        <Footer />
       </body>
     </html>
   );

@@ -10,3 +10,6 @@ seen_tweets.json
 # site
 site/.next*
 /site/.next
+
+.DS_Store
+site/.DS_Store

@@ -1,17 +1,14 @@
-import Header from "@/components/header";
-import Footer from "@/components/footer";
-import LiveActivityFeed from "@/components/live-activity-feed";
-import SocialIntegration from "@/components/social-integration";
+import Image from "next/image";
 
 export default function Home() {
   return (
-    <>
-      <Header />
-      <main>
-        <LiveActivityFeed />
-        <SocialIntegration />
-      </main>
-      <Footer />
-    </>
+    <div className="relative w-full" style={{ height: "calc(100vh - 140px)" }}>
+      <Image
+        src="/bg.png"
+        alt="Background"
+        fill
+        style={{ objectFit: "cover" }}
+      />
+    </div>
   );
 }
