@@ -357,3 +357,46 @@ export const getChatCompletion = async ({
     }
   }
 };
+
+export const getTweetScore = async (tweet: string): Promise<number> => {
+  try {
+    const response = await generateText({
+      model: openrouter("openai/gpt-4o-mini"),
+      prompt: `Rate this tweet on a scale of 0-100 based on the following criteria:
+- How engaging and "banger" worthy it is (viral potential, clever writing, memorable)
+- It should NOT promote or mention any tokens/tickers except NANI or ⌘
+- It should be authentic and not overly promotional
+- It should fit crypto twitter culture and vibes
+
+If it mentions unauthorized tokens/tickers, rate it 0.
+If it's promotional/shilly, rate it under 40.
+If it's engaging but basic, rate it 40-70.
+If it's a potential banger, rate it 70-100.
+
+ONLY RETURN A NUMBER 0-100, NOTHING ELSE.
+
+Tweet to rate: "${tweet}"`,
+      maxTokens: 10,
+      temperature: 0.3,
+    });
+
+    const score = parseInt(response.text);
+    if (isNaN(score) || score < 0 || score > 100) {
+      throw new Error("Invalid score generated");
+    }
+
+    return score;
+  } catch (e) {
+    const { response } = e as AxiosError;
+    switch (response?.status) {
+      case 400:
+        throw Error(`Context window is full.`);
+      case 404:
+        throw Error(`Model is unavailable.`);
+      case 429:
+        throw Error(`Rate limited.`);
+      default:
+        throw e;
+    }
+  }
+};
