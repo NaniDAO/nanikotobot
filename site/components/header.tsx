@@ -1,5 +1,6 @@
+"use client";
 import Link from "next/link";
-import { Pill, Zap, Cpu } from "lucide-react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export default function Header() {
   return (
@@ -13,6 +14,7 @@ export default function Header() {
             @nanipilled
           </span>
         </Link>
+        <ConnectButton />
       </div>
     </header>
   );

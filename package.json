@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:discord": "bun src/discord/index.ts",
-    "start:twitter": "bun src/twitter/index.ts",
+    "start:discord": "bun agent/discord/index.ts",
+    "start:twitter": "bun agent/twitter/index.ts",
     "start": "tsx src/index.ts",
     "dev": "tsx src/index.ts --watch",
     "build": "tsx src/index.ts --build",

@@ -3,6 +3,7 @@ import "@/styles/globals.css";
 import { sans, serif, mono } from "@/lib/fonts";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import { Providers } from "@/components/providers";
 
 export const metadata = {
   title: "@nanipilled",
@@ -32,9 +33,11 @@ export default function RootLayout({
           "font-mono bg-black text-foreground min-h-screen flex flex-col"
         )}
       >
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <Providers>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
